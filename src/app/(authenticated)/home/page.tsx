@@ -25,17 +25,24 @@ export default function HomePage() {
   const [page, setPage] = useState(1)
   const pageSize = 20
 
-  const { data: meals, fetchNextPage, hasNextPage } = Api.meal.findMany.useInfiniteQuery(
+  const { data: meals, fetchNextPage, hasNextPage, isLoading, error } = Api.meal.findMany.useInfiniteQuery(
     {
       where: { isActive: true },
       include: { mealTags: true },
-      select: { id: true, name: true, price: true, photoUrl: true, mealTags: true },
       take: pageSize,
     },
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
     }
   )
+
+  useEffect(() => {
+    if (error) {
+      enqueueSnackbar(`Error loading meals: ${error.message}`, { variant: 'error' });
+    }
+  }, [error, enqueueSnackbar]);
+
+  console.log('Meals data:', meals);
 
   const { data: tags } = Api.mealTag.findMany.useQuery({})
 
@@ -46,12 +53,25 @@ export default function HomePage() {
 
   const { mutateAsync: createOrder } = Api.order.create.useMutation()
 
-  const filteredMeals = useMemo(() => 
-    meals?.pages.flatMap(page => page.items).filter(meal => 
+  const filteredMeals = useMemo(() => {
+    const allMeals = meals?.pages.flatMap(page => page.items) || [];
+    const filtered = allMeals.filter(meal => 
       selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name || ''))
-    ),
-    [meals, selectedTags]
-  )
+    );
+    console.log('Filtered meals:', filtered);
+    return filtered;
+  }, [meals, selectedTags])
+
+  useEffect(() => {
+    const fetchMeals = async () => {
+      try {
+        await fetchNextPage();
+      } catch (error) {
+        enqueueSnackbar(`Error fetching meals: ${error.message}`, { variant: 'error' });
+      }
+    };
+    fetchMeals();
+  }, [fetchNextPage, enqueueSnackbar]);
 
   const addToCart = useCallback((meal: any) => {
     setCart(prevCart => {
@@ -130,41 +150,49 @@ export default function HomePage() {
     <PageLayout layout="full-width">
       <Row gutter={[16, 16]} className="bg-white px-4 py-8">
         <Col xs={24} md={18}>
-          <Row gutter={[16, 16]}>
-            {filteredMeals?.map(meal => (
-              meal && (
-                <Col xs={24} sm={12} md={8} lg={6} key={meal.id}>
-                  <Card
-                    cover={
-                      <img
-                        alt={meal?.name}
-                        src={meal?.photoUrl}
-                        className="h-40 object-cover"
-                      />
-                    }
-                    hoverable
-                    actions={[
-                      <Button 
-                        key="add" 
-                        type="text" 
-                        icon={<ShoppingCartOutlined />}
-                        onClick={() => addToCart(meal)}
-                      >
-                        {meal?.price}
-                      </Button>
-                    ]}
-                  >
-                    <Card.Meta
-                      title={meal?.name}
-                      description={
-                        <div>{meal?.mealTags?.map(tag => tag?.name).join(', ')}</div>
+          {isLoading ? (
+            <div>Loading meals...</div>
+          ) : error ? (
+            <div>Error loading meals: {error.message}</div>
+          ) : filteredMeals && filteredMeals.length > 0 ? (
+            <Row gutter={[16, 16]}>
+              {filteredMeals.map(meal => (
+                meal && (
+                  <Col xs={24} sm={12} md={8} lg={6} key={meal.id}>
+                    <Card
+                      cover={
+                        <img
+                          alt={meal?.name}
+                          src={meal?.photoUrl}
+                          className="h-40 object-cover"
+                        />
                       }
-                    />
-                  </Card>
-                </Col>
-              )
-            ))}
-          </Row>
+                      hoverable
+                      actions={[
+                        <Button 
+                          key="add" 
+                          type="text" 
+                          icon={<ShoppingCartOutlined />}
+                          onClick={() => addToCart(meal)}
+                        >
+                          {meal?.price}
+                        </Button>
+                      ]}
+                    >
+                      <Card.Meta
+                        title={meal?.name}
+                        description={
+                          <div>{meal?.mealTags?.map(tag => tag?.name).join(', ')}</div>
+                        }
+                      />
+                    </Card>
+                  </Col>
+                )
+              ))}
+            </Row>
+          ) : (
+            <div>No meals available</div>
+          )}
         </Col>
         <Col xs={24} md={6}>
           <Card title="Shopping Cart" className="sticky top-4">
