@@ -53,12 +53,13 @@ export default function MealsPage() {
 
   const handleAddOrEdit = async (values: any) => {
     try {
+      const uniqueTags = Array.from(new Set(values.tags));
       const mealData = {
         name: values.name,
         price: values.price.toString(),
         photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : '',
         mealTags: {
-          create: values.tags?.map((tag: string) => ({ name: tag })),
+          create: uniqueTags.map((tag: string) => ({ name: tag })),
         },
         isActive: values.isActive,
       }
@@ -129,15 +130,18 @@ export default function MealsPage() {
       title: 'Tags',
       dataIndex: 'mealTags',
       key: 'mealTags',
-      render: (tags: any[] | undefined) => (
-        <>
-          {tags?.map(tag => (
-            <Tag color="blue" key={tag.id}>
-              {tag.name}
-            </Tag>
-          ))}
-        </>
-      ),
+      render: (tags: any[] | undefined) => {
+        const uniqueTags = Array.from(new Set(tags?.map(tag => tag.name) || []));
+        return (
+          <>
+            {uniqueTags.map(tag => (
+              <Tag color="blue" key={tag}>
+                {tag}
+              </Tag>
+            ))}
+          </>
+        );
+      },
     },
     {
       title: 'Status',
@@ -230,7 +234,14 @@ export default function MealsPage() {
         onOk={form.submit}
         onCancel={() => setIsModalVisible(false)}
       >
-        <Form form={form} onFinish={handleAddOrEdit} layout="vertical">
+        <Form 
+          form={form} 
+          onFinish={(values) => {
+            const uniqueTags = Array.from(new Set(values.tags));
+            handleAddOrEdit({ ...values, tags: uniqueTags });
+          }} 
+          layout="vertical"
+        >
           <Form.Item 
             name="name" 
             label="Name" 
@@ -256,6 +267,13 @@ export default function MealsPage() {
               mode="tags"
               style={{ width: '100%' }}
               placeholder="Add tags"
+              filterOption={(input, option) =>
+                (option?.label?.toString().toLowerCase() ?? '').includes(input.toLowerCase())
+              }
+              options={Array.from(new Set(meals?.flatMap(meal => meal.mealTags?.map(tag => tag.name) ?? []) ?? [])).map(tag => ({
+                value: tag,
+                label: tag,
+              }))}
             />
           </Form.Item>
           <Form.Item name="photoUrl" label="Photo">
