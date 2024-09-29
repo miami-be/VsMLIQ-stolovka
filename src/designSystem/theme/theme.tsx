@@ -36,7 +36,7 @@ export const Theme = {
     controlHeightSM: 36,
 
     // Layout
-    padding: 20,
+    padding: 16,
     boxShadow:
       '0 2px 4px 0 rgba(0, 0, 0, 0.1), 0 2px 8px -1px rgba(0, 0, 0, 0.05), 0 4px 6px 0 rgba(0, 0, 0, 0.05)',
     borderRadius: 8,
@@ -74,5 +74,10 @@ export const Theme = {
       paddingInlineSM: 20,
       fontWeight: 500,
     },
+    Card: {
+      smallPaddingLG: 12,
+      smallPaddingMD: 8,
+      smallPaddingSM: 8,
+    },
   },
-}
+};

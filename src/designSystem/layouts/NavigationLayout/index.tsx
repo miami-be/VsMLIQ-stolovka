@@ -1,8 +1,6 @@
-import { useUserContext } from '@/core/context'
 import { Flex } from 'antd'
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import { ReactNode } from 'react'
-import { Leftbar } from './components/Leftbar'
 import { Mobilebar } from './components/Mobilebar'
 import { Topbar } from './components/Topbar'
 import { NavigationItem } from './types'
@@ -73,12 +71,6 @@ export const NavigationLayout: React.FC<Props> = ({ children }) => {
 
   const itemsTopbar = itemsVisible.filter(item => item.position === 'topbar')
 
-  const itemsLeftbar = itemsVisible.filter(item => item.position === 'leftbar')
-
-  const itemsLeftbottom = itemsVisible.filter(
-    item => item.position === 'leftbar-bottom',
-  )
-
   const itemsMobile = itemsVisible
 
   let keySelected = pathname
@@ -93,16 +85,8 @@ export const NavigationLayout: React.FC<Props> = ({ children }) => {
 
       <Mobilebar keySelected={keySelected} items={itemsMobile} />
 
-      <Flex flex={1} style={{ overflowY: 'hidden' }}>
-        <Leftbar
-          keySelected={keySelected}
-          items={itemsLeftbar}
-          itemsBottom={itemsLeftbottom}
-        />
-
-        <Flex flex={1} vertical style={{ overflowY: 'hidden' }}>
-          {children}
-        </Flex>
+      <Flex flex={1} vertical style={{ overflowY: 'hidden' }}>
+        {children}
       </Flex>
     </>
   )

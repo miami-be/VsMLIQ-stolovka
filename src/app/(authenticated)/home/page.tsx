@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Typography, Input, Button, Row, Col, Card, InputNumber, Select, Tag, Collapse, Space } from 'antd'
-import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined, CaretRightOutlined } from '@ant-design/icons'
+import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
+import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { Text } = Typography
-const { Panel } = Collapse
 import { useUserContext } from '@/core/context'
 import { useSnackbar } from 'notistack'
 import { Api } from '@/core/trpc'
@@ -12,6 +11,7 @@ import { PageLayout } from '@/designSystem/layouts/PageLayout'
 import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
+import { TagGroup } from '@/designSystem/ui/TagGroup'
 
 export default function HomePage() {
   const router = useRouter()
@@ -23,26 +23,25 @@ export default function HomePage() {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [paymentType, setPaymentType] = useState<string>('Balance')
   const [isCustomerListVisible, setIsCustomerListVisible] = useState(false)
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const [filteredMeals, setFilteredMeals] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const pageSize = 20
 
   const { data: meals, fetchNextPage, hasNextPage, isLoading, error } = Api.meal.findMany.useInfiniteQuery(
-    {
-      where: { isActive: true },
-      include: { mealTags: { where: { name: { in: ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб'] } } } },
-      take: pageSize,
-    },
-    {
-      getNextPageParam: (lastPage, allPages) => {
-        if (lastPage.length < pageSize) {
-          return undefined;
-        }
-        return { skip: allPages.length * pageSize, take: pageSize };
+      {
+        where: { isActive: true },
+        take: pageSize,
+        include: { mealTags: true },
       },
-    }
-  )
+      {
+        getNextPageParam: (lastPage, allPages) => {
+          if (lastPage.length < pageSize) {
+            return undefined;
+          }
+          return { skip: allPages.length * pageSize, take: pageSize };
+        },
+      }
+    )
 
   useEffect(() => {
     if (error) {
@@ -71,29 +70,21 @@ export default function HomePage() {
 
   const groupedMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
-    const groups = {};
-    allMeals.forEach(meal => {
-      meal.mealTags?.forEach(tag => {
-        if (!groups[tag.name]) {
-          groups[tag.name] = [];
+    const groupedByTag = allMeals.reduce((acc, meal) => {
+      meal.mealTags.forEach(tag => {
+        if (!acc[tag.name]) {
+          acc[tag.name] = [];
         }
-        groups[tag.name].push(meal);
+        acc[tag.name].push(meal);
       });
-    });
-    const orderPriority = ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб'];
-    return Object.entries(groups).sort((a, b) => {
-      const indexA = orderPriority.indexOf(a[0]);
-      const indexB = orderPriority.indexOf(b[0]);
-      if (indexA === -1 && indexB === -1) return a[0].localeCompare(b[0]);
-      if (indexA === -1) return 1;
-      if (indexB === -1) return -1;
-      return indexA - indexB;
-    });
+      return acc;
+    }, {});
+    return Object.entries(groupedByTag).sort(([a], [b]) => a.localeCompare(b));
   }, [meals])
 
-  const uniqueTags = useMemo(() => {
-    return Array.from(new Set(groupedMeals.map(([tag]) => tag)));
-  }, [groupedMeals])
+  useEffect(() => {
+    setFilteredMeals(groupedMeals);
+  }, [groupedMeals]);
 
   useEffect(() => {
     const fetchMeals = async () => {
@@ -201,71 +192,19 @@ export default function HomePage() {
   return (
     <PageLayout layout="full-width">
       <Row gutter={[16, 16]} className="bg-gray-100 px-2 pb-4">
-        <Col xs={24} lg={20}>
-          <Row className="mb-4">
-            <Space wrap>
-              {uniqueTags.map(tag => (
-                <Tag
-                  key={tag}
-                  color={selectedTag === tag ? 'blue' : 'default'}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                >
-                  {tag}
-                </Tag>
-              ))}
-            </Space>
-          </Row>
+        <Col xs={24} lg={18}>
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
             <div>Error loading meals: {error.message}</div>
           ) : (
-            <Collapse
-              defaultActiveKey={selectedTag ? [selectedTag] : [groupedMeals[0]?.[0]]}
-              expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
-            >
-              {groupedMeals
-                .filter(([category]) => !selectedTag || category === selectedTag)
-                .map(([category, meals]) => (
-                  <Panel header={<h2 className="text-xl font-bold">{category}</h2>} key={category}>
-                    <Row gutter={[8, 8]}>
-                      {meals.map(meal => (
-                        <Col xs={8} sm={6} md={4} lg={3} xl={2} key={meal.id}>
-                          <Card
-                            hoverable
-                            onClick={() => addToCart(meal)}
-                            cover={
-                              <div style={{ height: '120px', overflow: 'hidden' }}>
-                                <img
-                                  src={meal?.photoUrl || '/placeholder.jpg'}
-                                  alt={meal?.name || 'Meal'}
-                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                />
-                              </div>
-                            }
-                            bodyStyle={{ padding: '12px' }}
-                          >
-                            <Card.Meta
-                              title={<span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{meal?.name}</span>}
-                              description={
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                                  <span style={{ fontSize: '0.7rem' }}>{meal?.price}</span>
-                                  <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
-                                </div>
-                              }
-                            />
-                          </Card>
-                        </Col>
-                      ))}
-                    </Row>
-                  </Panel>
-                ))}
-            </Collapse>
+            groupedMeals.map(([tag, meals]) => (
+              <TagGroup key={tag} tag={tag} meals={meals} addToCart={addToCart} />
+            ))
           )}
         </Col>
-        <Col xs={24} lg={4}>
-          <Card className="sticky top-4">
+        <Col xs={24} lg={6}>
+          <Card className="sticky top-4" style={{ width: '100%' }}>
             <h2 className="text-xl font-bold mb-4">Shopping Cart</h2>
             {cart.length === 0 ? (
               <Text type="secondary">No data</Text>
@@ -298,39 +237,20 @@ export default function HomePage() {
                 placeholder="Search for a customer"
                 style={{ width: '100%' }}
                 onSearch={debouncedSearch}
-                onChange={(values) => {
-                  handleCustomerSelect(values[0], { customer: customers?.find(c => c.id === values[0]) });
-                  setSelectedTags(values.slice(1));
-                }}
+                onChange={(value) => handleCustomerSelect(value, { customer: customers?.find(c => c.id === value) })}
                 onSelect={() => setIsCustomerListVisible(false)}
-                value={[selectedCustomer?.id, ...selectedTags].filter(Boolean)}
+                value={selectedCustomer?.id}
                 filterOption={false}
                 notFoundContent={null}
                 suffixIcon={selectedCustomer ? <CloseCircleOutlined onClick={handleClearCustomer} /> : <SearchOutlined />}
-                mode="tags"
               >
                 {customers?.map((customer) => (
                   <Select.Option key={customer.id} value={customer.id} customer={customer}>
                     {customer.name}
                   </Select.Option>
                 ))}
-                {Array.from(new Set(meals?.pages.flatMap(page => page.flatMap(meal => meal.mealTags?.map(tag => tag.name) ?? [])) ?? [])).map(tag => (
-                  <Select.Option key={tag} value={tag}>
-                    {tag}
-                  </Select.Option>
-                ))}
               </Select>
             </div>
-            {selectedTags.length > 0 && (
-              <div className='mt-4'>
-                <p className='font-semibold mb-2'>Selected Tags:</p>
-                {selectedTags.map(tag => (
-                  <Tag key={tag} closable onClose={() => setSelectedTags(selectedTags.filter(t => t !== tag))}>
-                    {tag}
-                  </Tag>
-                ))}
-              </div>
-            )}
             <div className="mt-6">
               <p className="font-semibold mb-2">Payment Method</p>
               <div className="flex flex-wrap gap-2">
