@@ -21,7 +21,7 @@ export default function HomePage() {
   const [cart, setCart] = useState<{ meal: any; quantity: number }[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [paymentType, setPaymentType] = useState<string>('Balance')
-  const [isCustomerDropdownVisible, setIsCustomerDropdownVisible] = useState(false)
+  const [isCustomerListVisible, setIsCustomerListVisible] = useState(false)
   const [page, setPage] = useState(1)
   const pageSize = 20
 
@@ -132,6 +132,7 @@ export default function HomePage() {
       setCart([])
       setSelectedCustomer(null)
       setPaymentType('Balance')
+      setIsCustomerListVisible(false)
     } catch (error) {
       enqueueSnackbar('Failed to create order', { variant: 'error' })
     }
@@ -153,6 +154,18 @@ export default function HomePage() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [handleScroll])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isCustomerListVisible && !event.target.closest('.customer-search-container')) {
+        setIsCustomerListVisible(false)
+      }
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [isCustomerListVisible])
 
   return (
     <PageLayout layout="full-width">
@@ -227,12 +240,33 @@ export default function HomePage() {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <p className="text-xl font-bold">Total: {getTotalAmount.toFixed(2)}</p>
             </div>
-            <Input
-              placeholder="Search for a customer"
-              prefix={<SearchOutlined className="text-gray-400" />}
-              onChange={e => debouncedSearch(e.target.value)}
-              className="mt-6"
-            />
+            <div className="customer-search-container">
+              <Input
+                placeholder="Search for a customer"
+                prefix={<SearchOutlined className="text-gray-400" />}
+                onChange={(e) => {
+                  debouncedSearch(e.target.value)
+                  setIsCustomerListVisible(true)
+                }}
+                onFocus={() => setIsCustomerListVisible(true)}
+                className="mt-6"
+              />
+              {isCustomerListVisible && customers && (
+                <div className="customer-list">
+                  {customers.map((customer) => (
+                    <div
+                      key={customer.id}
+                      onClick={() => {
+                        setSelectedCustomer(customer)
+                        setIsCustomerListVisible(false)
+                      }}
+                    >
+                      {customer.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="mt-6">
               <p className="font-semibold mb-2">Payment Method</p>
               <div className="flex flex-wrap gap-2">
