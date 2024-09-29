@@ -32,7 +32,7 @@ export default function HomePage() {
       take: pageSize,
     },
     {
-      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      getNextPageParam: (lastPage, allPages) => allPages.length * pageSize,
     }
   )
 
@@ -54,7 +54,7 @@ export default function HomePage() {
   const { mutateAsync: createOrder } = Api.order.create.useMutation()
 
   const filteredMeals = useMemo(() => {
-    const allMeals = meals?.pages.flatMap(page => page.items) || [];
+    const allMeals = meals?.pages.flatMap(page => page) || [];
     const filtered = allMeals.filter(meal => 
       selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name || ''))
     );
@@ -168,23 +168,20 @@ export default function HomePage() {
                         />
                       }
                       hoverable
-                      actions={[
+                    >
+                      <Card.Meta
+                        title={meal?.name}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                        <Text>{meal?.price}</Text>
                         <Button 
-                          key="add" 
                           type="text" 
                           icon={<ShoppingCartOutlined />}
                           onClick={() => addToCart(meal)}
                         >
-                          {meal?.price}
+                          Add to Cart
                         </Button>
-                      ]}
-                    >
-                      <Card.Meta
-                        title={meal?.name}
-                        description={
-                          <div>{meal?.mealTags?.map(tag => tag?.name).join(', ')}</div>
-                        }
-                      />
+                      </div>
                     </Card>
                   </Col>
                 )
