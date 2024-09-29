@@ -42,6 +42,9 @@ export default function OrdersPage() {
         customer: { name: { contains: searchCustomer, mode: 'insensitive' } },
       }),
     },
+    orderBy: {
+      date: 'desc',
+    },
   })
 
   const columns = [
@@ -49,7 +52,7 @@ export default function OrdersPage() {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD'),
+      render: (date: string) => dayjs(date).isValid() ? dayjs(date).format('YYYY-MM-DD') : 'Invalid Date',
     },
     {
       title: 'Customer',
@@ -111,7 +114,7 @@ export default function OrdersPage() {
 
       <Table
         columns={columns}
-        dataSource={orders}
+        dataSource={orders?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())}
         loading={isLoading}
         rowKey="id"
         pagination={{ pageSize: 10 }}

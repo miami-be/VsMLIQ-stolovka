@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
-import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined, OrderedListOutlined } from '@ant-design/icons'
 const { Text } = Typography
 import { useUserContext } from '@/core/context'
 import { useSnackbar } from 'notistack'
@@ -19,6 +19,10 @@ export default function HomePage() {
   const router = useRouter()
   const { user } = useUserContext()
   const { enqueueSnackbar } = useSnackbar()
+
+  const navigateToOrders = () => {
+    router.push('/orders')
+  }
 
   const [searchTerm, setSearchTerm] = useState('')
   const [cart, setCart] = useState<{ meal: any; quantity: number }[]>([])
@@ -154,19 +158,28 @@ export default function HomePage() {
 
   const handleOrder = async () => {
     if (!selectedCustomer) {
-      enqueueSnackbar('Please select a customer', { variant: 'error' })
-      return
+      enqueueSnackbar('Please select a customer', { variant: 'error' });
+      return;
+    }
+    if (cart.length === 0) {
+      enqueueSnackbar('Cart is empty', { variant: 'error' });
+      return;
+    }
+    if (!paymentType) {
+      enqueueSnackbar('Please select a payment method', { variant: 'error' });
+      return;
     }
 
     try {
       await createOrder({
         data: {
-          customerId: selectedCustomer.id,
-          amount: getTotalAmount,
+          customer: { connect: { id: selectedCustomer.id } },
+          amount: getTotalAmount.toString(),
           paymentMethod: paymentType,
+          date: new Date().toISOString(),
           orderItems: {
             create: cart.map(item => ({
-              mealId: item.meal.id,
+              meal: { connect: { id: item.meal.id } },
               quantity: item.quantity,
             })),
           },
@@ -178,7 +191,14 @@ export default function HomePage() {
       setPaymentType('Balance')
       setIsCustomerListVisible(false)
     } catch (error) {
-      enqueueSnackbar('Failed to create order', { variant: 'error' })
+      console.error('Order creation error:', error);
+      let errorMessage = 'An unexpected error occurred';
+      if (error.cause instanceof ZodError) {
+        errorMessage = error.cause.issues.map(issue => issue.message).join(', ');
+      } else {
+        errorMessage = error.message || errorMessage;
+      }
+      enqueueSnackbar(`Failed to create order: ${errorMessage}`, { variant: 'error' });
     }
   }
 
@@ -212,6 +232,13 @@ export default function HomePage() {
     <PageLayout layout="full-width">
       <Row gutter={[16, 16]} className="bg-gray-100 px-1 pb-2">
         <Col xs={24} lg={18}>
+          <Button 
+            icon={<OrderedListOutlined />} 
+            onClick={navigateToOrders}
+            style={{ marginBottom: '16px' }}
+          >
+            View Orders
+          </Button>
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
