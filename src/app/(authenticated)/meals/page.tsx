@@ -59,7 +59,7 @@ export default function MealsPage() {
         name: values.name,
         price: values.price.toString(),
         photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : '',
-        isActive: values.isActive,
+        isActive: values.isActive ?? true,
         mealTags: {
           deleteMany: {},
           create: uniqueTags.map((tag: string) => ({ name: tag })),
@@ -294,7 +294,7 @@ export default function MealsPage() {
               <Button icon={<UploadOutlined />}>Upload Photo</Button>
             </Upload>
           </Form.Item>
-          <Form.Item name="isActive" label="Status" valuePropName="checked">
+          <Form.Item name="isActive" label="Status" valuePropName="checked" initialValue={true}>
             <Switch />
           </Form.Item>
         </Form>

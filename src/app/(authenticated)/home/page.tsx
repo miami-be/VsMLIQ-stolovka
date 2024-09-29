@@ -194,7 +194,7 @@ export default function HomePage() {
 
   return (
     <PageLayout layout="full-width">
-      <Row gutter={[16, 16]} className="bg-gray-100 px-2 pb-4">
+      <Row gutter={[16, 16]} className="bg-gray-100 px-1 pb-2">
         <Col xs={24} lg={18}>
           {isLoading ? (
             <div>Loading meals...</div>
@@ -212,7 +212,7 @@ export default function HomePage() {
           )}
         </Col>
         <Col xs={24} lg={6}>
-          <Card className="sticky top-4" style={{ width: '100%' }}>
+          <Card className="sticky top-4 px-4" style={{ width: '100%' }}>
             <h2 className="text-xl font-bold mb-4">Shopping Cart</h2>
             {cart.length === 0 ? (
               <Text type="secondary">No data</Text>

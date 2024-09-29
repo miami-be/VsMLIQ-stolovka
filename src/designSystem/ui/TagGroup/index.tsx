@@ -13,13 +13,13 @@ export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart }) => 
   return (
     <div className="mb-8">
       <Title level={3} className="mb-4">{tag}</Title>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
         {meals.map((meal) => (
           <Card
             key={meal.id}
             hoverable
             size="small"
-            cover={<img alt={meal.name} src={meal.imageUrl || meal.photoUrl || '/default-meal-image.jpg'} className="h-36 object-cover" />}
+            cover={<img alt={meal.name} src={meal.imageUrl || meal.photoUrl || '/default-meal-image.jpg'} className="h-24 object-cover" />}
             onClick={() => addToCart(meal)}
           >
             <Card.Meta
