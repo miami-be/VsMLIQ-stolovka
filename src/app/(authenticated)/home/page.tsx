@@ -7,7 +7,7 @@ const { Text } = Typography
 import { useUserContext } from '@/core/context'
 import { useSnackbar } from 'notistack'
 import { Api } from '@/core/trpc'
-import { PageLayout } from '@/designSystem'
+import { PageLayout } from '@/designSystem/layouts/PageLayout'
 import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
 
@@ -223,36 +223,35 @@ export default function HomePage() {
                 <h2 className="text-xl font-bold mb-4">{category}</h2>
                 <Row gutter={[16, 16]}>
                   {meals.map(meal => (
-                      <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
-                        <Card
-                          hoverable
-                          onClick={() => addToCart(meal)}
-                          cover={
-                            <div style={{ height: '150px', overflow: 'hidden' }}>
-                              <img
-                                src={meal?.photoUrl || '/placeholder.jpg'}
-                                alt={meal?.name || 'Meal'}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
+                    <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
+                      <Card
+                        hoverable
+                        onClick={() => addToCart(meal)}
+                        cover={
+                          <div style={{ height: '150px', overflow: 'hidden' }}>
+                            <img
+                              src={meal?.photoUrl || '/placeholder.jpg'}
+                              alt={meal?.name || 'Meal'}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          </div>
+                        }
+                        bodyStyle={{ padding: '12px' }}
+                      >
+                        <Card.Meta
+                          title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
+                          description={
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                              <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
+                              <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
                             </div>
                           }
-                          bodyStyle={{ padding: '12px' }}
-                        >
-                          <Card.Meta
-                            title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
-                            description={
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                                <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
-                                <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
-                              </div>
-                            }
-                          />
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
-              )
+                        />
+                      </Card>
+                    </Col>
+                  ))}
+                </Row>
+              </div>
             ))
           )}
         </Col>
