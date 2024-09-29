@@ -30,6 +30,7 @@ export default function HomePage() {
   const [cart, setCart] = useState<{ meal: any; quantity: number }[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [paymentType, setPaymentType] = useState<string>('Balance')
+  const [isCustomerDropdownVisible, setIsCustomerDropdownVisible] = useState(false)
 
   const { data: meals } = Api.meal.findMany.useQuery({
     include: { mealTags: true },
@@ -107,9 +108,9 @@ export default function HomePage() {
   }
 
   return (
-    <PageLayout layout="narrow" className="bg-white px-0">
-      <Row gutter={[0, 16]}>
-        <Col xs={24} md={16}>
+    <PageLayout layout="full-width">
+      <Row gutter={[0, 16]} className="bg-white">
+        <Col xs={24} md={16} className="px-4">
           <Space wrap className="mb-4">
             {tags?.map(tag => (
               <Tag
@@ -165,7 +166,7 @@ export default function HomePage() {
           </Row>
         </Col>
 
-        <Col xs={24} md={8}>
+        <Col xs={24} md={8} className="px-4">
           <Card title="Shopping Cart" className="bg-white shadow-md">
             {cart.length === 0 ? (
               <Text className="text-gray-500">No data</Text>
@@ -206,20 +207,27 @@ export default function HomePage() {
                 onChange={e => setSearchTerm(e.target.value)}
                 onPressEnter={() => refetchCustomers()}
                 className="mb-2"
+                onClick={() => setIsCustomerDropdownVisible(true)}
+                onBlur={() => setTimeout(() => setIsCustomerDropdownVisible(false), 200)}
               />
-              <div className="max-h-40 overflow-y-auto border rounded">
-                {customers?.map(customer => (
-                  <div
-                    key={customer.id}
-                    className={`p-2 cursor-pointer hover:bg-gray-100 ${
-                      selectedCustomer?.id === customer.id ? 'bg-blue-100' : ''
-                    }`}
-                    onClick={() => setSelectedCustomer(customer)}
-                  >
-                    <Text>{customer.name}</Text>
-                  </div>
-                ))}
-              </div>
+              {isCustomerDropdownVisible && (
+                <div className="max-h-40 overflow-y-auto border rounded">
+                  {customers?.map(customer => (
+                    <div
+                      key={customer.id}
+                      className={`p-2 cursor-pointer hover:bg-gray-100 ${
+                        selectedCustomer?.id === customer.id ? 'bg-blue-100' : ''
+                      }`}
+                      onClick={() => {
+                        setSelectedCustomer(customer)
+                        setIsCustomerDropdownVisible(false)
+                      }}
+                    >
+                      <Text>{customer.name}</Text>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-6">
