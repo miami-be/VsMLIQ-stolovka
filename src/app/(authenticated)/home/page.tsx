@@ -87,7 +87,8 @@ export default function HomePage() {
         return [...prevCart, { meal, quantity: 1 }]
       }
     })
-  }, [])
+    enqueueSnackbar(`${meal.name} added to cart`, { variant: 'success' })
+  }, [enqueueSnackbar])
 
   const removeFromCart = useCallback((mealId: string) => {
     setCart(prevCart => prevCart.filter(item => item.meal.id !== mealId))
@@ -162,6 +163,7 @@ export default function HomePage() {
                   <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
                     <Card
                       hoverable
+                      onClick={() => addToCart(meal)}
                       cover={
                         <div style={{ height: '150px', overflow: 'hidden' }}>
                           <img
@@ -178,12 +180,6 @@ export default function HomePage() {
                         description={
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
                             <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
-                            <Button 
-                              type="text"
-                              icon={<ShoppingCartOutlined />}
-                              onClick={() => addToCart(meal)}
-                              style={{ padding: '4px' }}
-                            />
                           </div>
                         }
                       />
