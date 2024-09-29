@@ -28,6 +28,7 @@ export default function HomePage() {
   const [filteredMeals, setFilteredMeals] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const pageSize = 20
+  const [activeTags, setActiveTags] = useState<string[]>(MEAL_GROUP_ORDER)
 
   const { data: meals, fetchNextPage, hasNextPage, isLoading, error } = Api.meal.findMany.useInfiniteQuery(
       {
@@ -85,15 +86,19 @@ export default function HomePage() {
       return acc;
     }, {});
 
-    return MEAL_GROUP_ORDER
+    return activeTags
       .filter(tag => groupedByTag[tag])
       .map(tag => [tag, groupedByTag[tag]])
       .concat(
         Object.entries(groupedByTag)
-          .filter(([tag]) => !MEAL_GROUP_ORDER.includes(tag))
+          .filter(([tag]) => !activeTags.includes(tag))
           .sort(([a], [b]) => a.localeCompare(b))
       );
-  }, [meals])
+  }, [meals, activeTags])
+
+  const handleRemoveTag = useCallback((tag: string) => {
+    setActiveTags(prevTags => prevTags.filter(t => t !== tag));
+  }, []);
 
   useEffect(() => {
     setFilteredMeals(groupedMeals);
@@ -222,6 +227,7 @@ export default function HomePage() {
                   price: meal.price
                 }))} 
                 addToCart={addToCart} 
+                removeTag={handleRemoveTag}
                 smallFontSize={true} 
                 spacing="small" 
               />

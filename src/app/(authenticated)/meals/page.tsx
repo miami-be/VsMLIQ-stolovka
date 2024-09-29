@@ -64,9 +64,18 @@ export default function MealsPage() {
           create: uniqueTags.map((tag: string) => ({ name: tag })),
         },
       }
-      console.log('Meal data to be saved:', mealData);
 
       if (editingMeal) {
+        // Remove deleted tags
+        const deletedTags = editingMeal.mealTags
+          .filter(tag => !uniqueTags.includes(tag.name))
+          .map(tag => ({ id: tag.id }));
+
+        mealData.mealTags = {
+          ...mealData.mealTags,
+          deleteMany: deletedTags,
+        };
+
         await updateMeal({
           where: { id: editingMeal.id },
           data: mealData,
@@ -96,6 +105,13 @@ export default function MealsPage() {
       }
     }
   }
+
+  const handleRemoveTag = (removedTag: string) => {
+    const tags = form.getFieldValue('tags');
+    form.setFieldsValue({
+      tags: tags.filter((tag: string) => tag !== removedTag),
+    });
+  };
 
   const handleDelete = async (id: string) => {
     try {
@@ -272,10 +288,7 @@ export default function MealsPage() {
                 value: tag,
                 label: tag,
               }))}
-              onDeselect={(value) => {
-                const currentTags = form.getFieldValue('tags');
-                form.setFieldsValue({ tags: currentTags.filter((tag: string) => tag !== value) });
-              }}
+              onDeselect={handleRemoveTag}
               tagRender={(props) => {
                 const { label, closable, onClose } = props;
                 return (
@@ -286,6 +299,13 @@ export default function MealsPage() {
                     style={{ marginRight: 3 }}
                   >
                     {label}
+                    <CloseCircleOutlined
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleRemoveTag(label as string);
+                      }}
+                      style={{ marginLeft: 5 }}
+                    />
                   </Tag>
                 );
               }}
