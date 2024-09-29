@@ -21,7 +21,7 @@ export default function HomePage() {
   const { enqueueSnackbar } = useSnackbar()
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [cart, setCart] = useState<{ meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl?: string }; quantity: number }[]>([])
+  const [cart, setCart] = useState<{ meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl: string }; quantity: number }[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; parentContact: string; class: string; balance: number; dateCreated: Date; dateUpdated: Date; } | null>(null)
   const [customerBalance, setCustomerBalance] = useState<number>(0)
   const [paymentType, setPaymentType] = useState<string>('Balance')
@@ -34,7 +34,7 @@ export default function HomePage() {
       {
         where: { isActive: true },
         take: pageSize,
-        include: { mealTags: true },
+        include: { mealTags: true, imageUrl: true },
       },
       {
         getNextPageParam: (lastPage, allPages) => {
@@ -70,7 +70,7 @@ export default function HomePage() {
   const groupedMeals = useMemo(() => {
     if (!meals?.pages) return [];
     const allMeals = meals.pages.flatMap(page => page) || [];
-    const groupedByTag = allMeals.reduce((acc: Record<string, Array<{ id: string; name: string; price: string; mealTags: Array<{ name: string }>; imageUrl?: string }>>, meal: { id: string; name: string; price: string; mealTags: Array<{ name: string }>; imageUrl?: string }) => {
+    const groupedByTag = allMeals.reduce((acc: Record<string, Array<{ id: string; name: string; price: string; mealTags: Array<{ name: string }>; imageUrl: string }>>, meal: { id: string; name: string; price: string; mealTags: Array<{ name: string }>; imageUrl: string }) => {
       const uniqueTags = Array.from(new Set(meal.mealTags.map((tag: { name: string }) => tag.name)));
       uniqueTags.forEach(tag => {
         if (!acc[tag]) {

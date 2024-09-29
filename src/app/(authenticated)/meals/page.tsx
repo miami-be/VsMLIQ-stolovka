@@ -71,9 +71,13 @@ export default function MealsPage() {
           .filter(tag => !uniqueTags.includes(tag.name))
           .map(tag => ({ id: tag.id }));
 
+        // Update existing tags and create new ones
+        const existingTags = editingMeal.mealTags.map(tag => tag.name);
+        const tagsToCreate = uniqueTags.filter(tag => !existingTags.includes(tag));
+
         mealData.mealTags = {
-          ...mealData.mealTags,
           deleteMany: deletedTags,
+          create: tagsToCreate.map((tag: string) => ({ name: tag })),
         };
 
         await updateMeal({
