@@ -14,6 +14,7 @@ import {
   Tag,
   Switch,
   Select,
+  Space,
 } from 'antd'
 import {
   PlusOutlined,
@@ -162,7 +163,7 @@ export default function MealsPage() {
         text: string,
         record: Prisma.MealGetPayload<{ include: { mealTags: true } }>,
       ) => (
-        <>
+        <Space>
           <Button
             icon={<EditOutlined />}
             onClick={() => {
@@ -179,7 +180,7 @@ export default function MealsPage() {
             onClick={() => handleDelete(record.id)}
             danger
           />
-        </>
+        </Space>
       ),
     },
   ]
@@ -245,10 +246,10 @@ export default function MealsPage() {
             label="Price" 
             rules={[
               { required: true, message: 'Please input the meal price!' },
-              { type: 'number', min: 0, message: 'Price must be a positive number' }
+              { validator: (_, value) => value && value > 0 ? Promise.resolve() : Promise.reject('Price must be a positive number') }
             ]}
           >
-            <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
+            <InputNumber min={0} step={0.01} style={{ width: '100%' }} stringMode />
           </Form.Item>
           <Form.Item name="tags" label="Tags">
             <Select
