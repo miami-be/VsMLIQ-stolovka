@@ -10,6 +10,7 @@ import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem'
 import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
+import Image from 'next/image'
 
 export default function HomePage() {
   const router = useRouter()
@@ -149,8 +150,8 @@ export default function HomePage() {
 
   return (
     <PageLayout layout="full-width">
-      <Row gutter={[16, 16]} className="bg-white px-4 py-8">
-        <Col xs={24} md={18}>
+      <Row gutter={[16, 16]} className="bg-gray-100 px-4 py-8">
+        <Col xs={24} lg={18}>
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
@@ -159,30 +160,31 @@ export default function HomePage() {
             <Row gutter={[16, 16]}>
               {filteredMeals.map(meal => (
                 meal && (
-                  <Col xs={12} sm={6} md={4} lg={3} key={meal.id}>
+                  <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
                     <Card
-                      cover={
-                        <img
-                          alt={meal?.name}
-                          src={meal?.photoUrl}
-                          className="h-24 object-cover"
-                        />
-                      }
                       hoverable
+                      cover={
+                        <div style={{ height: '150px', overflow: 'hidden' }}>
+                          <Image
+                            src={meal?.photoUrl || '/placeholder.jpg'}
+                            alt={meal?.name || 'Meal'}
+                            layout="fill"
+                            objectFit="cover"
+                          />
+                        </div>
+                      }
+                      bodyStyle={{ padding: '12px' }}
                     >
                       <Card.Meta
-                        title={meal?.name}
-                        style={{ fontSize: '0.7rem' }}
+                        title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
+                        description={<span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>}
                       />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                        <Text style={{ fontSize: '0.7rem' }}>{meal?.price}</Text>
-                        <Button 
-                          type="text" 
-                          icon={<ShoppingCartOutlined />}
-                          onClick={() => addToCart(meal)}
-                          size="small"
-                        />
-                      </div>
+                      <Button 
+                        type="text"
+                        icon={<ShoppingCartOutlined />}
+                        onClick={() => addToCart(meal)}
+                        style={{ position: 'absolute', bottom: '12px', right: '12px', padding: '4px' }}
+                      />
                     </Card>
                   </Col>
                 )
@@ -192,8 +194,9 @@ export default function HomePage() {
             <div>No meals available</div>
           )}
         </Col>
-        <Col xs={24} md={6}>
-          <Card title="Shopping Cart" className="sticky top-4">
+        <Col xs={24} lg={6}>
+          <Card className="sticky top-4">
+            <h2 className="text-xl font-bold mb-4">Shopping Cart</h2>
             {cart.length === 0 ? (
               <Text type="secondary">No data</Text>
             ) : (
@@ -204,31 +207,31 @@ export default function HomePage() {
                 </div>
               ))
             )}
-            <div className="mt-4 pt-4 border-t">
-              <Text strong>Total: {getTotalAmount.toFixed(2)}</Text>
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <p className="text-xl font-bold">Total: {getTotalAmount.toFixed(2)}</p>
             </div>
             <Input
               placeholder="Search for a customer"
-              prefix={<SearchOutlined />}
+              prefix={<SearchOutlined className="text-gray-400" />}
               onChange={e => debouncedSearch(e.target.value)}
-              className="mt-4"
+              className="mt-6"
             />
-            <div className="mt-4">
-              <Text strong>Payment Method</Text>
-              <div>
+            <div className="mt-6">
+              <p className="font-semibold mb-2">Payment Method</p>
+              <div className="flex flex-wrap gap-2">
                 {['Balance', 'Cash', 'Card'].map(method => (
                   <Button
                     key={method}
                     type={paymentType === method ? 'primary' : 'default'}
                     onClick={() => setPaymentType(method)}
-                    className="mr-2 mb-2"
+                    className="flex-grow"
                   >
                     {method}
                   </Button>
                 ))}
               </div>
             </div>
-            <Button type="primary" block onClick={handleOrder} className="mt-4">
+            <Button type="primary" block onClick={handleOrder} className="mt-6">
               Confirm Order
             </Button>
           </Card>
