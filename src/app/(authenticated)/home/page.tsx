@@ -22,7 +22,7 @@ export default function HomePage() {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [cart, setCart] = useState<{ meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl?: string }; quantity: number }[]>([])
-  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; balance: string } | null>(null)
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; parentContact: string; class: string; balance: number; dateCreated: Date; dateUpdated: Date; } | null>(null)
   const [customerBalance, setCustomerBalance] = useState<number>(0)
   const [paymentType, setPaymentType] = useState<string>('Balance')
   const [isCustomerListVisible, setIsCustomerListVisible] = useState(false)
@@ -69,9 +69,10 @@ export default function HomePage() {
   const { mutateAsync: updateCustomer } = Api.customer.update.useMutation()
 
   const groupedMeals = useMemo(() => {
-    const allMeals = meals?.pages.flatMap(page => page) || [];
-    const groupedByTag = allMeals.reduce((acc, meal) => {
-      const uniqueTags = Array.from(new Set(meal.mealTags.map(tag => tag.name)));
+    if (!meals?.pages) return [];
+    const allMeals = meals.pages.flatMap(page => page) || [];
+    const groupedByTag = allMeals.reduce((acc: Record<string, Array<{ id: string; name: string; price: string; mealTags: Array<{ name: string }>; imageUrl?: string }>>, meal: { id: string; name: string; price: string; mealTags: Array<{ name: string }>; imageUrl?: string }) => {
+      const uniqueTags = Array.from(new Set(meal.mealTags.map((tag: { name: string }) => tag.name)));
       uniqueTags.forEach(tag => {
         if (!acc[tag]) {
           acc[tag] = [];
@@ -84,7 +85,16 @@ export default function HomePage() {
       return acc;
     }, {});
 
-    return Object.entries(groupedByTag).sort(([a], [b]) => a.localeCompare(b));
+    return Object.entries(groupedByTag).sort(([a], [b]) => {
+      const indexA = MEAL_GROUP_ORDER.indexOf(a);
+      const indexB = MEAL_GROUP_ORDER.indexOf(b);
+      if (indexA !== -1 && indexB !== -1) {
+        return indexA - indexB;
+      }
+      if (indexA !== -1) return -1;
+      if (indexB !== -1) return 1;
+      return a.localeCompare(b);
+    });
   }, [meals])
 
   useEffect(() => {
@@ -104,7 +114,7 @@ export default function HomePage() {
     };
     fetchMeals();
   }, [fetchNextPage, enqueueSnackbar]);
-  const addToCart = useCallback((meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl?: string }) => {
+  const addToCart = useCallback((meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl: string }) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.meal.id === meal.id)
       if (existingItem) {
@@ -181,7 +191,7 @@ export default function HomePage() {
       enqueueSnackbar('Order created successfully', { variant: 'success' })
       setCart([])
       setSelectedCustomer(null)
-      setCustomerBalance('0')
+      setCustomerBalance(0)
       setPaymentType('Balance')
       setIsCustomerListVisible(false)
     } catch (error) {
@@ -214,9 +224,9 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', throttledHandleScroll)
   }, [handleScroll])
 
-  const handleCustomerSelect = (value: string, option: { customer: { id: string; balance: string } }) => {
+  const handleCustomerSelect = (value: string, option: { value: string, label: string, customer: { id: string; name: string; parentContact: string; class: string; balance: number; dateCreated: Date; dateUpdated: Date; } }) => {
     setSelectedCustomer(option.customer)
-    setCustomerBalance(parseFloat(option.customer.balance || '0'))
+    setCustomerBalance(option.customer.balance || 0)
   }
 
   const handleClearCustomer = () => {
@@ -233,20 +243,26 @@ export default function HomePage() {
           ) : error ? (
             <div>Error loading meals: {error.message}</div>
           ) : (
-            groupedMeals.map(([tag, meals]) => (
-              <TagGroup 
-                key={tag} 
-                tag={tag} 
-                meals={meals.map(meal => ({
-                  id: meal.id,
-                  name: meal.name,
-                  price: meal.price,
-                  mealTags: meal.mealTags,
-                  imageUrl: meal.photoUrl || meal.imageUrl
-                }))} 
-                addToCart={addToCart}
-              />
-            ))
+            groupedMeals.map(([tag, meals]) => {
+              if (!Array.isArray(meals)) {
+                console.error(`Expected meals to be an array for tag ${tag}, but got:`, meals);
+                return null;
+              }
+              return (
+                <TagGroup 
+                  key={tag} 
+                  tag={tag} 
+                  meals={meals.map(meal => ({
+                    id: meal.id,
+                    name: meal.name,
+                    price: meal.price,
+                    mealTags: meal.mealTags,
+                    imageUrl: meal.imageUrl || '/default-meal-image.jpg'
+                  }))} 
+                  addToCart={addToCart}
+                />
+              );
+            })
           )}
           {hasNextPage && (
             <Button onClick={() => fetchNextPage()} loading={isLoading}>

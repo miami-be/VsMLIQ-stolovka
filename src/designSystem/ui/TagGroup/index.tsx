@@ -32,7 +32,7 @@ export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, small
             key={meal.id}
             hoverable
             size="small"
-            cover={<img alt={meal.name} src={meal.imageUrl || '/default-meal-image.jpg'} className="h-16 object-cover" />}
+            cover={<img alt={meal.name} src={meal.imageUrl || '/default-meal-image.jpg'} className="h-16 object-cover" onError={(e) => { e.currentTarget.src = '/default-meal-image.jpg' }} />}
             onClick={() => addToCart(meal)}
           >
             <Card.Meta
