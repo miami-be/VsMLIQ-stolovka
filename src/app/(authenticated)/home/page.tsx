@@ -75,7 +75,10 @@ export default function HomePage() {
         if (!acc[tag.name]) {
           acc[tag.name] = [];
         }
-        acc[tag.name].push(meal);
+        acc[tag.name].push({
+          ...meal,
+          imageUrl: meal.imageUrl || '/default-meal-image.jpg'
+        });
       });
       return acc;
     }, {});
@@ -201,6 +204,11 @@ export default function HomePage() {
             groupedMeals.map(([tag, meals]) => (
               <TagGroup key={tag} tag={tag} meals={meals} addToCart={addToCart} />
             ))
+          )}
+          {hasNextPage && (
+            <Button onClick={() => fetchNextPage()} loading={isLoading}>
+              Load More
+            </Button>
           )}
         </Col>
         <Col xs={24} lg={6}>
