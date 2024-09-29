@@ -179,7 +179,8 @@ export default function HomePage() {
                         title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
                         description={
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                            <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
+                            <span style={{ fontSize: '0.8rem' }}>${meal?.price}</span>
+                            <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
                           </div>
                         }
                       />
