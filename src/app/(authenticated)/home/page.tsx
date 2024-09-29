@@ -2,13 +2,12 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
-import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined, OrderedListOutlined } from '@ant-design/icons'
+import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { Text } = Typography
 import { useUserContext } from '@/core/context'
 import { useSnackbar } from 'notistack'
 import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem/layouts/PageLayout'
-import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
 import { TagGroup } from '@/designSystem/ui/TagGroup'
@@ -17,17 +16,13 @@ import dayjs from 'dayjs'
 const MEAL_GROUP_ORDER = ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб']
 
 export default function HomePage() {
-  const router = useRouter()
   const { user } = useUserContext()
   const { enqueueSnackbar } = useSnackbar()
-
-  const navigateToOrders = () => {
-    router.push('/orders')
-  }
 
   const [searchTerm, setSearchTerm] = useState('')
   const [cart, setCart] = useState<{ meal: any; quantity: number }[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+  const [customerBalance, setCustomerBalance] = useState<string>('0')
   const [paymentType, setPaymentType] = useState<string>('Balance')
   const [isCustomerListVisible, setIsCustomerListVisible] = useState(false)
   const [filteredMeals, setFilteredMeals] = useState<any[]>([])
@@ -75,6 +70,7 @@ export default function HomePage() {
   }, [customerError, enqueueSnackbar]);
 
   const { mutateAsync: createOrder } = Api.order.create.useMutation()
+  const { mutateAsync: updateCustomer } = Api.customer.update.useMutation()
 
   const groupedMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
@@ -173,6 +169,19 @@ export default function HomePage() {
 
     try {
       const currentDate = dayjs().format();
+      if (paymentType === 'Balance') {
+        const customerBalanceFloat = parseFloat(customerBalance);
+        const totalAmountFloat = getTotalAmount;
+        if (customerBalanceFloat < totalAmountFloat) {
+          enqueueSnackbar('Insufficient balance', { variant: 'error' });
+          return;
+        }
+        const newBalance = (customerBalanceFloat - totalAmountFloat).toFixed(2);
+        await updateCustomer({
+          where: { id: selectedCustomer.id },
+          data: { balance: newBalance },
+        });
+      }
       await createOrder({
         data: {
           customer: { connect: { id: selectedCustomer.id } },
@@ -190,6 +199,7 @@ export default function HomePage() {
       enqueueSnackbar('Order created successfully', { variant: 'success' })
       setCart([])
       setSelectedCustomer(null)
+      setCustomerBalance('0')
       setPaymentType('Balance')
       setIsCustomerListVisible(false)
     } catch (error) {
@@ -224,23 +234,18 @@ export default function HomePage() {
 
   const handleCustomerSelect = (value: string, option: any) => {
     setSelectedCustomer(option.customer)
+    setCustomerBalance(option.customer.balance || '0')
   }
 
   const handleClearCustomer = () => {
     setSelectedCustomer(null)
+    setCustomerBalance('0')
   }
 
   return (
     <PageLayout layout="full-width">
       <Row gutter={[16, 16]} className="bg-gray-100 px-1 pb-2">
         <Col xs={24} lg={18}>
-          <Button 
-            icon={<OrderedListOutlined />} 
-            onClick={navigateToOrders}
-            style={{ marginBottom: '16px' }}
-          >
-            View Orders
-          </Button>
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
@@ -317,6 +322,11 @@ export default function HomePage() {
                   </Select.Option>
                 ))}
               </Select>
+              {selectedCustomer && (
+                <div className="mt-2">
+                  <Text>Current Balance: {parseFloat(customerBalance).toFixed(2)}</Text>
+                </div>
+              )}
             </div>
             <div className="mt-6">
               <p className="font-semibold mb-2">Payment Method</p>
