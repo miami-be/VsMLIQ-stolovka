@@ -74,11 +74,12 @@ export default function HomePage() {
   const groupedMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
     const groupedByTag = allMeals.reduce((acc, meal) => {
-      meal.mealTags.forEach(tag => {
-        if (!acc[tag.name]) {
-          acc[tag.name] = [];
+      const uniqueTags = Array.from(new Set(meal.mealTags.map(tag => tag.name)));
+      uniqueTags.forEach(tag => {
+        if (!acc[tag]) {
+          acc[tag] = [];
         }
-        acc[tag.name].push({
+        acc[tag].push({
           ...meal,
           imageUrl: meal.imageUrl || '/default-meal-image.jpg'
         });
@@ -224,7 +225,8 @@ export default function HomePage() {
                   ...meal, 
                   photoUrl: meal.photoUrl || meal.imageUrl,
                   name: meal.name,
-                  price: meal.price
+                  price: meal.price,
+                  tags: meal.mealTags.map(tag => tag.name)
                 }))} 
                 addToCart={addToCart} 
                 removeTag={handleRemoveTag}
