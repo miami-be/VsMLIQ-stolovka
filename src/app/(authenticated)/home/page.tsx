@@ -200,8 +200,8 @@ export default function HomePage() {
 
   return (
     <PageLayout layout="full-width">
-      <Row gutter={[16, 16]} className="bg-gray-100 px-4 pb-8">
-        <Col xs={24} lg={18}>
+      <Row gutter={[16, 16]} className="bg-gray-100 px-2 pb-4">
+        <Col xs={24} lg={20}>
           <Row className="mb-4">
             <Space wrap>
               {uniqueTags.map(tag => (
@@ -229,14 +229,14 @@ export default function HomePage() {
                 .filter(([category]) => !selectedTag || category === selectedTag)
                 .map(([category, meals]) => (
                   <Panel header={<h2 className="text-xl font-bold">{category}</h2>} key={category}>
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[8, 8]}>
                       {meals.map(meal => (
-                        <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
+                        <Col xs={8} sm={6} md={4} lg={3} xl={2} key={meal.id}>
                           <Card
                             hoverable
                             onClick={() => addToCart(meal)}
                             cover={
-                              <div style={{ height: '150px', overflow: 'hidden' }}>
+                              <div style={{ height: '120px', overflow: 'hidden' }}>
                                 <img
                                   src={meal?.photoUrl || '/placeholder.jpg'}
                                   alt={meal?.name || 'Meal'}
@@ -247,10 +247,10 @@ export default function HomePage() {
                             bodyStyle={{ padding: '12px' }}
                           >
                             <Card.Meta
-                              title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
+                              title={<span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{meal?.name}</span>}
                               description={
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                                  <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
+                                  <span style={{ fontSize: '0.7rem' }}>{meal?.price}</span>
                                   <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
                                 </div>
                               }
@@ -264,7 +264,7 @@ export default function HomePage() {
             </Collapse>
           )}
         </Col>
-        <Col xs={24} lg={6}>
+        <Col xs={24} lg={4}>
           <Card className="sticky top-4">
             <h2 className="text-xl font-bold mb-4">Shopping Cart</h2>
             {cart.length === 0 ? (
