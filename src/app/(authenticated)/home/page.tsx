@@ -10,7 +10,6 @@ import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem'
 import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
-import Image from 'next/image'
 
 export default function HomePage() {
   const router = useRouter()
@@ -165,11 +164,10 @@ export default function HomePage() {
                       hoverable
                       cover={
                         <div style={{ height: '150px', overflow: 'hidden' }}>
-                          <Image
+                          <img
                             src={meal?.photoUrl || '/placeholder.jpg'}
                             alt={meal?.name || 'Meal'}
-                            layout="fill"
-                            objectFit="cover"
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                           />
                         </div>
                       }
@@ -177,13 +175,17 @@ export default function HomePage() {
                     >
                       <Card.Meta
                         title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
-                        description={<span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>}
-                      />
-                      <Button 
-                        type="text"
-                        icon={<ShoppingCartOutlined />}
-                        onClick={() => addToCart(meal)}
-                        style={{ position: 'absolute', bottom: '12px', right: '12px', padding: '4px' }}
+                        description={
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                            <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
+                            <Button 
+                              type="text"
+                              icon={<ShoppingCartOutlined />}
+                              onClick={() => addToCart(meal)}
+                              style={{ padding: '4px' }}
+                            />
+                          </div>
+                        }
                       />
                     </Card>
                   </Col>
