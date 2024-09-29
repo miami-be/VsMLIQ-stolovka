@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Typography, Input, Button, Row, Col, Card, InputNumber, Select, Tag } from 'antd'
+import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
 import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { Text } = Typography
 import { useUserContext } from '@/core/context'
@@ -11,40 +11,12 @@ import { PageLayout } from '@/designSystem/layouts/PageLayout'
 import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
 
-const TagSelector = ({ tags, selectedTags, setSelectedTags, usedTags }) => {
-  const handleTagClick = (tag) => {
-    setSelectedTags(prevTags =>
-      prevTags.includes(tag)
-        ? prevTags.filter(t => t !== tag)
-        : [...prevTags, tag]
-    )
-  }
-
-  const uniqueTags = Array.from(new Set(tags?.filter(tag => usedTags.includes(tag.name)).map(tag => tag.name) || []));
-
-  return (
-    <div className="mb-4">
-      {uniqueTags.map(tagName => (
-        <Tag
-          key={tagName}
-          onClick={() => handleTagClick(tagName)}
-          color={selectedTags.includes(tagName) ? 'blue' : 'default'}
-          style={{ cursor: 'pointer', marginBottom: '8px' }}
-        >
-          {tagName}
-        </Tag>
-      ))}
-    </div>
-  )
-}
-
 export default function HomePage() {
   const router = useRouter()
   const { user } = useUserContext()
   const { enqueueSnackbar } = useSnackbar()
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [cart, setCart] = useState<{ meal: any; quantity: number }[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [paymentType, setPaymentType] = useState<string>('Balance')
@@ -72,8 +44,6 @@ export default function HomePage() {
     }
   }, [error, enqueueSnackbar]);
 
-  const { data: tags } = Api.mealTag.findMany.useQuery({})
-
   const { data: customers, refetch: refetchCustomers, error: customerError } =
     Api.customer.findMany.useQuery({
       where: { name: { contains: searchTerm, mode: 'insensitive' } },
@@ -93,22 +63,16 @@ export default function HomePage() {
   const groupedMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
     const groups = {};
-    const usedTags = [];
     allMeals.forEach(meal => {
-      if (selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name))) {
-        meal.mealTags?.forEach(tag => {
-          if (!groups[tag.name]) {
-            groups[tag.name] = [];
-          }
-          groups[tag.name].push(meal);
-          if (!usedTags.includes(tag.name)) {
-            usedTags.push(tag.name);
-          }
-        });
-      }
+      meal.mealTags?.forEach(tag => {
+        if (!groups[tag.name]) {
+          groups[tag.name] = [];
+        }
+        groups[tag.name].push(meal);
+      });
     });
-    return { groups, usedTags };
-  }, [meals, selectedTags])
+    return { groups };
+  }, [meals])
 
   useEffect(() => {
     const fetchMeals = async () => {
@@ -216,7 +180,6 @@ export default function HomePage() {
     <PageLayout layout="full-width">
       <Row gutter={[16, 16]} className="bg-gray-100 px-4 py-8">
         <Col xs={24} lg={18}>
-          <TagSelector tags={tags} selectedTags={selectedTags} setSelectedTags={setSelectedTags} usedTags={groupedMeals.usedTags} />
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
