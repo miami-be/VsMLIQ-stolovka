@@ -20,16 +20,18 @@ const TagSelector = ({ tags, selectedTags, setSelectedTags, usedTags }) => {
     )
   }
 
+  const uniqueTags = Array.from(new Set(tags?.filter(tag => usedTags.includes(tag.name)).map(tag => tag.name) || []));
+
   return (
     <div className="mb-4">
-      {tags?.filter(tag => usedTags.includes(tag.name)).map(tag => (
+      {uniqueTags.map(tagName => (
         <Tag
-          key={tag.id}
-          onClick={() => handleTagClick(tag.name)}
-          color={selectedTags.includes(tag.name) ? 'blue' : 'default'}
+          key={tagName}
+          onClick={() => handleTagClick(tagName)}
+          color={selectedTags.includes(tagName) ? 'blue' : 'default'}
           style={{ cursor: 'pointer', marginBottom: '8px' }}
         >
-          {tag.name}
+          {tagName}
         </Tag>
       ))}
     </div>
@@ -91,7 +93,7 @@ export default function HomePage() {
   const groupedMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
     const groups = {};
-    const usedTags = new Set();
+    const usedTags = [];
     allMeals.forEach(meal => {
       if (selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name))) {
         meal.mealTags?.forEach(tag => {
@@ -99,11 +101,13 @@ export default function HomePage() {
             groups[tag.name] = [];
           }
           groups[tag.name].push(meal);
-          usedTags.add(tag.name);
+          if (!usedTags.includes(tag.name)) {
+            usedTags.push(tag.name);
+          }
         });
       }
     });
-    return { groups, usedTags: Array.from(usedTags) };
+    return { groups, usedTags };
   }, [meals, selectedTags])
 
   useEffect(() => {

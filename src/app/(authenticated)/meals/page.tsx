@@ -21,6 +21,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   UploadOutlined,
+  CloseCircleOutlined,
 } from '@ant-design/icons'
 const { Title, Text } = Typography
 import { useUserContext } from '@/core/context'
@@ -58,22 +59,34 @@ export default function MealsPage() {
         name: values.name,
         price: values.price.toString(),
         photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : '',
-        mealTags: {
-          create: uniqueTags.map((tag: string) => ({ name: tag })),
-        },
         isActive: values.isActive,
       }
       console.log('Meal data to be saved:', mealData);
 
       if (editingMeal) {
+        const existingTags = editingMeal.mealTags?.map(tag => tag.name) || [];
+        const tagsToRemove = existingTags.filter(tag => !uniqueTags.includes(tag));
+        const tagsToAdd = uniqueTags.filter(tag => !existingTags.includes(tag));
+
         await updateMeal({
           where: { id: editingMeal.id },
-          data: mealData,
+          data: {
+            ...mealData,
+            mealTags: {
+              deleteMany: { name: { in: tagsToRemove } },
+              create: tagsToAdd.map((tag: string) => ({ name: tag })),
+            },
+          },
         })
         enqueueSnackbar('Meal updated successfully', { variant: 'success' })
       } else {
         await createMeal({
-          data: mealData,
+          data: {
+            ...mealData,
+            mealTags: {
+              create: uniqueTags.map((tag: string) => ({ name: tag })),
+            },
+          },
         })
         enqueueSnackbar('Meal added successfully', { variant: 'success' })
       }
@@ -274,6 +287,24 @@ export default function MealsPage() {
                 value: tag,
                 label: tag,
               }))}
+              onDeselect={(value) => {
+                const currentTags = form.getFieldValue('tags');
+                form.setFieldsValue({ tags: currentTags.filter((tag: string) => tag !== value) });
+              }}
+              tagRender={(props) => {
+                const { label, value, closable, onClose } = props;
+                return (
+                  <Tag
+                    color="blue"
+                    closable={closable}
+                    onClose={onClose}
+                    style={{ marginRight: 3 }}
+                  >
+                    {label}
+                    {closable && <CloseCircleOutlined onClick={() => onClose()} style={{ marginLeft: 3 }} />}
+                  </Tag>
+                );
+              }}
             />
           </Form.Item>
           <Form.Item name="photoUrl" label="Photo">
