@@ -21,6 +21,10 @@ export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, small
   const titleStyle = smallFontSize ? { fontSize: '18px' } : {};
   const textStyle = smallFontSize ? { fontSize: '12px' } : {};
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    e.currentTarget.src = '/default-meal-image.jpg';
+  };
+
   return (
     <div className="mb-4">
       <div className="flex justify-between items-center">
@@ -32,7 +36,14 @@ export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, small
             key={meal.id}
             hoverable
             size="small"
-            cover={<img alt={meal.name} src={meal.imageUrl || '/default-meal-image.jpg'} className="h-16 object-cover" onError={(e) => { e.currentTarget.src = '/default-meal-image.jpg' }} />}
+            cover={
+              <img 
+                alt={meal.name} 
+                src={meal.imageUrl || '/default-meal-image.jpg'} 
+                className="h-16 w-full object-cover" 
+                onError={handleImageError}
+              />
+            }
             onClick={() => addToCart(meal)}
           >
             <Card.Meta

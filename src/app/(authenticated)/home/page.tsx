@@ -41,11 +41,10 @@ export default function HomePage() {
           if (lastPage.length < pageSize) {
             return undefined;
           }
-          return { skip: allPages.length * pageSize, take: pageSize };
+          return { skip: allPages.length * pageSize };
         },
       }
     )
-
   useEffect(() => {
     if (error) {
       const errorMessage = error.message || 'An unexpected error occurred';
@@ -79,7 +78,7 @@ export default function HomePage() {
         }
         acc[tag].push({
           ...meal,
-          imageUrl: meal.imageUrl || '/default-meal-image.jpg'
+          imageUrl: meal.imageUrl !== undefined ? meal.imageUrl : '/default-meal-image.jpg'
         });
       });
       return acc;
@@ -224,7 +223,7 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', throttledHandleScroll)
   }, [handleScroll])
 
-  const handleCustomerSelect = (value: string, option: { value: string, label: string, customer: { id: string; name: string; parentContact: string; class: string; balance: number; dateCreated: Date; dateUpdated: Date; } }) => {
+  const handleCustomerSelect = (value: string, option: { value: string; label: string; customer: { id: string; name: string; parentContact: string; class: string; balance: number; dateCreated: Date; dateUpdated: Date; } }) => {
     setSelectedCustomer(option.customer)
     setCustomerBalance(option.customer.balance || 0)
   }
@@ -257,7 +256,7 @@ export default function HomePage() {
                     name: meal.name,
                     price: meal.price,
                     mealTags: meal.mealTags,
-                    imageUrl: meal.imageUrl || '/default-meal-image.jpg'
+                    imageUrl: meal.imageUrl
                   }))} 
                   addToCart={addToCart}
                 />
@@ -304,7 +303,7 @@ export default function HomePage() {
                 placeholder="Search for a customer"
                 style={{ width: '100%' }}
                 onSearch={debouncedSearch}
-                onChange={(value) => handleCustomerSelect(value, { customer: customers?.find(c => c.id === value) })}
+                onChange={(value, option) => handleCustomerSelect(value, option as { value: string; label: string; customer: { id: string; name: string; parentContact: string; class: string; balance: number; dateCreated: Date; dateUpdated: Date; } })}
                 onSelect={() => setIsCustomerListVisible(false)}
                 value={selectedCustomer?.id}
                 filterOption={false}
