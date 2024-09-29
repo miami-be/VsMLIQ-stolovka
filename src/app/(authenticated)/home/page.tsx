@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Typography, Input, Button, Row, Col, Card, InputNumber } from 'antd'
-import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
+import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { Text } = Typography
 import { useUserContext } from '@/core/context'
 import { useSnackbar } from 'notistack'
@@ -47,10 +47,19 @@ export default function HomePage() {
 
   const { data: tags } = Api.mealTag.findMany.useQuery({})
 
-  const { data: customers, refetch: refetchCustomers } =
+  const { data: customers, refetch: refetchCustomers, error: customerError } =
     Api.customer.findMany.useQuery({
       where: { name: { contains: searchTerm, mode: 'insensitive' } },
     })
+
+  useEffect(() => {
+    if (customerError) {
+      const errorMessage = customerError.message || 'An unexpected error occurred';
+      const nestedError = customerError.cause?.message || customerError.cause?.code;
+      const formattedError = nestedError ? `${errorMessage} (${nestedError})` : errorMessage;
+      enqueueSnackbar(`Error fetching customers: ${formattedError}`, { variant: 'error' });
+    }
+  }, [customerError, enqueueSnackbar]);
 
   const { mutateAsync: createOrder } = Api.order.create.useMutation()
 
@@ -155,17 +164,13 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [handleScroll])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isCustomerListVisible && !event.target.closest('.customer-search-container')) {
-        setIsCustomerListVisible(false)
-      }
-    }
-    document.addEventListener('click', handleClickOutside)
-    return () => {
-      document.removeEventListener('click', handleClickOutside)
-    }
-  }, [isCustomerListVisible])
+  const handleCustomerSelect = (value: string, option: any) => {
+    setSelectedCustomer(option.customer)
+  }
+
+  const handleClearCustomer = () => {
+    setSelectedCustomer(null)
+  }
 
   return (
     <PageLayout layout="full-width">
@@ -240,32 +245,25 @@ export default function HomePage() {
             <div className="mt-6 pt-4 border-t border-gray-200">
               <p className="text-xl font-bold">Total: {getTotalAmount.toFixed(2)}</p>
             </div>
-            <div className="customer-search-container">
-              <Input
+            <div className="customer-search-container mt-6">
+              <Select
+                showSearch
                 placeholder="Search for a customer"
-                prefix={<SearchOutlined className="text-gray-400" />}
-                onChange={(e) => {
-                  debouncedSearch(e.target.value)
-                  setIsCustomerListVisible(true)
-                }}
-                onFocus={() => setIsCustomerListVisible(true)}
-                className="mt-6"
-              />
-              {isCustomerListVisible && customers && (
-                <div className="customer-list">
-                  {customers.map((customer) => (
-                    <div
-                      key={customer.id}
-                      onClick={() => {
-                        setSelectedCustomer(customer)
-                        setIsCustomerListVisible(false)
-                      }}
-                    >
-                      {customer.name}
-                    </div>
-                  ))}
-                </div>
-              )}
+                style={{ width: '100%' }}
+                onSearch={debouncedSearch}
+                onChange={handleCustomerSelect}
+                onSelect={() => setIsCustomerListVisible(false)}
+                value={selectedCustomer?.name || undefined}
+                filterOption={false}
+                notFoundContent={null}
+                suffixIcon={selectedCustomer ? <CloseCircleOutlined onClick={handleClearCustomer} /> : <SearchOutlined />}
+              >
+                {customers?.map((customer) => (
+                  <Select.Option key={customer.id} value={customer.id} customer={customer}>
+                    {customer.name}
+                  </Select.Option>
+                ))}
+              </Select>
             </div>
             <div className="mt-6">
               <p className="font-semibold mb-2">Payment Method</p>
