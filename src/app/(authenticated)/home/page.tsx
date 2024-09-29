@@ -15,12 +15,10 @@ import {
 import { ShoppingCartOutlined, SearchOutlined } from '@ant-design/icons'
 const { Title, Text } = Typography
 import { useUserContext } from '@/core/context'
-import { useRouter, useParams } from 'next/navigation'
-import { useUploadPublic } from '@/core/hooks/upload'
 import { useSnackbar } from 'notistack'
-import dayjs from 'dayjs'
 import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
   const router = useRouter()
@@ -109,21 +107,16 @@ export default function HomePage() {
   }
 
   return (
-    <PageLayout layout="narrow">
-      <Title level={2}>Meal Catalogue</Title>
-      <Text>
-        Browse available meals, add them to your cart, and place an order.
-      </Text>
-
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+    <PageLayout layout="narrow" className="bg-white px-0">
+      <Row gutter={[0, 16]}>
         <Col xs={24} md={16}>
-          <Space wrap>
+          <Space wrap className="mb-4">
             {tags?.map(tag => (
               <Tag
                 key={tag.id}
-                color={
-                  selectedTags.includes(tag.name || '') ? 'blue' : 'default'
-                }
+                className={`cursor-pointer ${
+                  selectedTags.includes(tag.name || '') ? 'bg-blue-100 text-blue-800' : 'bg-gray-100'
+                }`}
                 onClick={() => {
                   if (selectedTags.includes(tag.name || '')) {
                     setSelectedTags(selectedTags.filter(t => t !== tag.name))
@@ -131,37 +124,41 @@ export default function HomePage() {
                     setSelectedTags([...selectedTags, tag.name || ''])
                   }
                 }}
-                style={{ cursor: 'pointer' }}
               >
                 {tag.name}
               </Tag>
             ))}
           </Space>
 
-          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+          <Row gutter={[16, 16]}>
             {filteredMeals?.map(meal => (
-              <Col xs={24} sm={12} md={8} key={meal.id}>
+              <Col xs={12} sm={8} md={6} key={meal.id}>
                 <Card
                   hoverable
                   cover={
                     <img
                       alt={meal.name}
                       src={meal.photoUrl}
-                      style={{ height: 200, objectFit: 'cover' }}
+                      className="h-32 object-cover"
                     />
                   }
                   actions={[
                     <Button
                       key="add"
-                      type="primary"
+                      type="text"
                       icon={<ShoppingCartOutlined />}
                       onClick={() => addToCart(meal)}
-                    >
-                      Add to Cart
-                    </Button>,
+                      className="text-blue-600 hover:text-blue-800"
+                    />,
                   ]}
+                  className="h-full"
                 >
-                  <Card.Meta title={meal.name} description={`$${meal.price}`} />
+                  <Card.Meta
+                    title={<span className="text-lg font-semibold">{meal.name}</span>}
+                    description={
+                      <Text strong className="text-gray-700">{meal.price}</Text>
+                    }
+                  />
                 </Card>
               </Col>
             ))}
@@ -169,77 +166,83 @@ export default function HomePage() {
         </Col>
 
         <Col xs={24} md={8}>
-          <Card title="Checkout Summary">
-            {cart.map(item => (
-              <div key={item.meal.id} style={{ marginBottom: 8 }}>
-                <Text>{item.meal.name}</Text>
-                <Text style={{ float: 'right' }}>
-                  $
-                  {(parseFloat(item.meal.price || '0') * item.quantity).toFixed(
-                    2,
-                  )}
-                </Text>
-                <br />
-                <Text type="secondary">Quantity: {item.quantity}</Text>
-                <Button
-                  size="small"
-                  danger
-                  style={{ float: 'right' }}
-                  onClick={() => removeFromCart(item.meal.id)}
-                >
-                  Remove
-                </Button>
+          <Card title="Shopping Cart" className="bg-white shadow-md">
+            {cart.length === 0 ? (
+              <Text className="text-gray-500">No data</Text>
+            ) : (
+              <div className="space-y-4">
+                {cart.map(item => (
+                  <div key={item.meal.id} className="flex justify-between items-center border-b pb-2">
+                    <div>
+                      <Text strong className="text-lg">{item.meal.name}</Text>
+                      <Text className="block text-gray-600">Quantity: {item.quantity}</Text>
+                    </div>
+                    <div className="text-right">
+                      <Text className="block font-semibold">
+                        ${(parseFloat(item.meal.price || '0') * item.quantity).toFixed(2)}
+                      </Text>
+                      <Button
+                        size="small"
+                        danger
+                        onClick={() => removeFromCart(item.meal.id)}
+                        className="mt-1"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-            <div style={{ marginTop: 16 }}>
-              <Text strong>Total: ${getTotalAmount().toFixed(2)}</Text>
+            )}
+            <div className="text-right pt-4 border-t">
+              <Text strong className="text-xl">Total: {getTotalAmount().toFixed(2)}</Text>
             </div>
 
-            <div style={{ marginTop: 16 }}>
+            <div className="mt-6">
               <Input
-                placeholder="Search customer"
-                prefix={<SearchOutlined />}
+                placeholder="Search for a customer"
+                prefix={<SearchOutlined className="text-gray-400" />}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 onPressEnter={() => refetchCustomers()}
+                className="mb-2"
               />
-              {customers?.map(customer => (
-                <div
-                  key={customer.id}
-                  style={{
-                    padding: 8,
-                    cursor: 'pointer',
-                    backgroundColor:
-                      selectedCustomer?.id === customer.id
-                        ? '#e6f7ff'
-                        : 'transparent',
-                  }}
-                  onClick={() => setSelectedCustomer(customer)}
-                >
-                  <Text>{customer.name}</Text>
-                </div>
-              ))}
+              <div className="max-h-40 overflow-y-auto border rounded">
+                {customers?.map(customer => (
+                  <div
+                    key={customer.id}
+                    className={`p-2 cursor-pointer hover:bg-gray-100 ${
+                      selectedCustomer?.id === customer.id ? 'bg-blue-100' : ''
+                    }`}
+                    onClick={() => setSelectedCustomer(customer)}
+                  >
+                    <Text>{customer.name}</Text>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div style={{ marginTop: 16 }}>
-              <Text>Payment Type:</Text>
+            <div className="mt-6">
               <Radio.Group
                 value={paymentType}
                 onChange={e => setPaymentType(e.target.value)}
+                optionType="button"
+                buttonStyle="solid"
+                className="w-full"
               >
-                <Radio value="Balance">Balance</Radio>
-                <Radio value="Cash">Cash</Radio>
-                <Radio value="Card">Card</Radio>
+                <Radio.Button value="Balance" className="flex-1 text-center">Balance</Radio.Button>
+                <Radio.Button value="Cash" className="flex-1 text-center">Cash</Radio.Button>
+                <Radio.Button value="Card" className="flex-1 text-center">Card</Radio.Button>
               </Radio.Group>
             </div>
 
             <Button
               type="primary"
-              style={{ marginTop: 16 }}
               onClick={handleOrder}
               block
+              className="mt-6 h-12 text-lg font-semibold"
             >
-              Place Order
+              Confirm Order
             </Button>
           </Card>
         </Col>

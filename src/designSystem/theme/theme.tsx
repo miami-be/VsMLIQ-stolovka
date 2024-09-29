@@ -9,73 +9,70 @@ export const Theme = {
   algorithm: theme.defaultAlgorithm,
   token: {
     // Colors
-    colorPrimary: 'black',
-    colorError: '#ff4d4f',
-    colorInfo: '#1677ff',
+    colorPrimary: '#1890ff',
+    colorError: '#f5222d',
+    colorInfo: '#1890ff',
     colorSuccess: '#52c41a',
     colorWarning: '#faad14',
-    colorTextBase: 'black',
-    colorLink: 'black',
-    colorBgBase: 'white',
-    colorBgContainer: 'white',
-    colorBorder: '#d4d4d8',
-    colorBorderSecondary: '#e4e4e7',
-    colorSplit: 'rgba(24, 24, 27, 0.07)',
+    colorTextBase: '#333333',
+    colorLink: '#1890ff',
+    colorBgBase: '#f0f2f5',
+    colorBgContainer: '#ffffff',
+    colorBorder: '#d9d9d9',
+    colorBorderSecondary: '#f0f0f0',
+    colorSplit: 'rgba(0, 0, 0, 0.06)',
     // Typography
     fontFamily: `${interFont.style.fontFamily}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial`,
     fontSize: 14,
     fontSizeHeading1: 38,
     fontSizeHeading2: 30,
     fontSizeHeading3: 24,
-    linkDecoration: 'underline',
+    linkDecoration: 'none',
 
     //Form
-    controlItemBgActive: '#f4f4f5',
-    controlOutline: 'rgba(24, 24, 27, 0.1)',
-    controlHeight: 36,
+    controlItemBgActive: '#e6f7ff',
+    controlOutline: 'rgba(24, 144, 255, 0.2)',
+    controlHeight: 40,
     controlHeightSM: 32,
 
     // Layout
     padding: 16,
     boxShadow:
-      '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
-    borderRadius: 6,
+      '0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02)',
+    borderRadius: 4,
     lineType: 'solid',
     lineWidth: 1,
-    motion: false,
+    motion: true,
   },
   components: {
     Form: {
-      itemMarginBottom: '22px',
+      itemMarginBottom: '24px',
     },
 
     Layout: {
-      headerBg: 'white', // topBar background color
-      footerBg: 'white', // footer background color
-      bodyBg: 'white', // page background color
-      siderBg: '#fbfbfb', // leftBar background color
+      headerBg: '#ffffff',
+      footerBg: '#f0f2f5',
+      bodyBg: '#f0f2f5',
+      siderBg: '#ffffff',
     },
     Menu: {
-      activeBarBorderWidth: 0,
-      itemHeight: 30,
-      //topbar menu items
-      horizontalItemSelectedColor: 'black',
-      horizontalItemSelectedBg: 'transparent',
-      //leftbar menu items
-      itemSelectedColor: 'black',
-      itemSelectedBg: 'transparent',
-      itemActiveBg: 'transparent',
-      //topbar and leftbar menu items
-      itemHoverColor: 'black',
-      itemHoverBg: 'transparent',
-      itemColor: '#909090',
+      activeBarBorderWidth: 3,
+      itemHeight: 40,
+      horizontalItemSelectedColor: '#1890ff',
+      horizontalItemSelectedBg: '#e6f7ff',
+      itemSelectedColor: '#1890ff',
+      itemSelectedBg: '#e6f7ff',
+      itemActiveBg: '#e6f7ff',
+      itemHoverColor: '#1890ff',
+      itemHoverBg: '#f5f5f5',
+      itemColor: '#333333',
       itemBg: 'transparent',
-      iconMarginInlineEnd: 8,
+      iconMarginInlineEnd: 10,
       iconSize: 16,
     },
     Button: {
-      paddingInlineSM: 11,
-      fontWeight: 500,
+      paddingInlineSM: 16,
+      fontWeight: 400,
     },
   },
 }
