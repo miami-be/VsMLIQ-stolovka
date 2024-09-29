@@ -13,6 +13,8 @@ import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
 import { TagGroup } from '@/designSystem/ui/TagGroup'
 
+const MEAL_GROUP_ORDER = ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб']
+
 export default function HomePage() {
   const router = useRouter()
   const { user } = useUserContext()
@@ -82,7 +84,15 @@ export default function HomePage() {
       });
       return acc;
     }, {});
-    return Object.entries(groupedByTag).sort(([a], [b]) => a.localeCompare(b));
+
+    return MEAL_GROUP_ORDER
+      .filter(tag => groupedByTag[tag])
+      .map(tag => [tag, groupedByTag[tag]])
+      .concat(
+        Object.entries(groupedByTag)
+          .filter(([tag]) => !MEAL_GROUP_ORDER.includes(tag))
+          .sort(([a], [b]) => a.localeCompare(b))
+      );
   }, [meals])
 
   useEffect(() => {
@@ -202,7 +212,7 @@ export default function HomePage() {
             <div>Error loading meals: {error.message}</div>
           ) : (
             groupedMeals.map(([tag, meals]) => (
-              <TagGroup key={tag} tag={tag} meals={meals} addToCart={addToCart} />
+              <TagGroup key={tag} tag={tag} meals={meals.map(meal => ({...meal, photoUrl: meal.photoUrl || meal.imageUrl}))} addToCart={addToCart} />
             ))
           )}
           {hasNextPage && (

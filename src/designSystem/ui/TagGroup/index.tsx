@@ -5,7 +5,12 @@ const { Title } = Typography;
 
 interface TagGroupProps {
   tag: string;
-  meals: any[];
+  meals: {
+    id: string;
+    name: string;
+    price: string;
+    photoUrl?: string;
+  }[];
   addToCart: (meal: any) => void;
 }
 
@@ -19,7 +24,7 @@ export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart }) => 
             key={meal.id}
             hoverable
             size="small"
-            cover={<img alt={meal.name} src={meal.imageUrl || meal.photoUrl || '/default-meal-image.jpg'} className="h-24 object-cover" />}
+            cover={<img alt={meal.name} src={meal.photoUrl || '/default-meal-image.jpg'} className="h-24 object-cover" />}
             onClick={() => addToCart(meal)}
           >
             <Card.Meta
