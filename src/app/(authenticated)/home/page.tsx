@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
 import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { Text } = Typography
@@ -29,7 +29,6 @@ export default function HomePage() {
   const [filteredMeals, setFilteredMeals] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const pageSize = 20
-  const [activeTags, setActiveTags] = useState<string[]>(MEAL_GROUP_ORDER)
 
   const { data: meals, fetchNextPage, hasNextPage, isLoading, error } = Api.meal.findMany.useInfiniteQuery(
       {
@@ -85,19 +84,8 @@ export default function HomePage() {
       return acc;
     }, {});
 
-    return activeTags
-      .filter(tag => groupedByTag[tag])
-      .map(tag => [tag, groupedByTag[tag]])
-      .concat(
-        Object.entries(groupedByTag)
-          .filter(([tag]) => !activeTags.includes(tag))
-          .sort(([a], [b]) => a.localeCompare(b))
-      );
-  }, [meals, activeTags])
-
-  const handleRemoveTag = useCallback((tag: string) => {
-    setActiveTags(prevTags => prevTags.filter(t => t !== tag));
-  }, []);
+    return Object.entries(groupedByTag).sort(([a], [b]) => a.localeCompare(b));
+  }, [meals])
 
   useEffect(() => {
     setFilteredMeals(groupedMeals);
@@ -256,8 +244,7 @@ export default function HomePage() {
                   mealTags: meal.mealTags,
                   imageUrl: meal.photoUrl || meal.imageUrl
                 }))} 
-                addToCart={addToCart} 
-                removeTag={handleRemoveTag}
+                addToCart={addToCart}
               />
             ))
           )}
