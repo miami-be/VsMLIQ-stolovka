@@ -48,7 +48,7 @@ export default function HomePage() {
 
   const filteredMeals = useMemo(() => 
     meals?.pages.flatMap(page => page.items).filter(meal => 
-      meal.isActive && (selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name || '')))
+      selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name || ''))
     ),
     [meals, selectedTags]
   )
