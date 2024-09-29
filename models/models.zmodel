@@ -33,7 +33,7 @@ model Customer {
     name            String?          
     parentContact  String?          
     class          String?          
-    balance      String?          
+    balance      Float?          
 
 orders        Order[]      @relation("customer")  
       dateCreated DateTime @default(now())

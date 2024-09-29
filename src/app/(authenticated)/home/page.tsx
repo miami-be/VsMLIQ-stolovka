@@ -172,15 +172,14 @@ export default function HomePage() {
       if (paymentType === 'Balance') {
         const customerBalanceFloat = parseFloat(customerBalance);
         const totalAmountFloat = getTotalAmount;
-        if (customerBalanceFloat < totalAmountFloat) {
-          enqueueSnackbar('Insufficient balance', { variant: 'error' });
-          return;
-        }
         const newBalance = (customerBalanceFloat - totalAmountFloat).toFixed(2);
         await updateCustomer({
           where: { id: selectedCustomer.id },
           data: { balance: newBalance },
         });
+        if (parseFloat(newBalance) < 0) {
+          enqueueSnackbar('Warning: Customer balance is now negative', { variant: 'warning' });
+        }
       }
       await createOrder({
         data: {
@@ -325,6 +324,9 @@ export default function HomePage() {
               {selectedCustomer && (
                 <div className="mt-2">
                   <Text>Current Balance: {parseFloat(customerBalance).toFixed(2)}</Text>
+                  {parseFloat(customerBalance) < 0 && (
+                    <Text type="danger"> (Negative Balance)</Text>
+                  )}
                 </div>
               )}
             </div>
