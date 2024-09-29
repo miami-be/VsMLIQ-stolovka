@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
 import { TagGroup } from '@/designSystem/ui/TagGroup'
+import dayjs from 'dayjs'
 
 const MEAL_GROUP_ORDER = ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб']
 
@@ -171,12 +172,13 @@ export default function HomePage() {
     }
 
     try {
+      const currentDate = dayjs().format();
       await createOrder({
         data: {
           customer: { connect: { id: selectedCustomer.id } },
           amount: getTotalAmount.toString(),
           paymentMethod: paymentType,
-          date: new Date().toISOString(),
+          date: currentDate,
           orderItems: {
             create: cart.map(item => ({
               meal: { connect: { id: item.meal.id } },

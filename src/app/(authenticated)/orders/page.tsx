@@ -52,7 +52,14 @@ export default function OrdersPage() {
       title: 'Date',
       dataIndex: 'date',
       key: 'date',
-      render: (date: string) => dayjs(date).isValid() ? dayjs(date).format('YYYY-MM-DD') : 'Invalid Date',
+      render: (date: string) => {
+        try {
+          return dayjs(date).isValid() ? dayjs(date).format('YYYY-MM-DD HH:mm:ss') : 'N/A';
+        } catch (error) {
+          console.error('Error parsing date:', error);
+          return 'N/A';
+        }
+      },
     },
     {
       title: 'Customer',
@@ -63,7 +70,7 @@ export default function OrdersPage() {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (amount: string) => `$${parseFloat(amount).toFixed(2)}`,
+      render: (amount: string) => `${parseFloat(amount).toFixed(2)}`,
     },
     {
       title: 'Payment Method',
@@ -131,13 +138,20 @@ export default function OrdersPage() {
           <div>
             <p>
               <strong>Date:</strong>{' '}
-              {dayjs(selectedOrder.date).format('YYYY-MM-DD')}
+              {(() => {
+                try {
+                  return dayjs(selectedOrder.date).isValid() ? dayjs(selectedOrder.date).format('YYYY-MM-DD HH:mm:ss') : 'N/A';
+                } catch (error) {
+                  console.error('Error parsing date:', error);
+                  return 'N/A';
+                }
+              })()}
             </p>
             <p>
               <strong>Customer:</strong> {selectedOrder.customer.name}
             </p>
             <p>
-              <strong>Amount:</strong> $
+              <strong>Amount:</strong>{' '}
               {parseFloat(selectedOrder.amount).toFixed(2)}
             </p>
             <p>
