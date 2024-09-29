@@ -23,10 +23,10 @@ export const Theme = {
     colorSplit: 'rgba(0, 0, 0, 0.08)',
     // Typography
     fontFamily: `${interFont.style.fontFamily}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial`,
-    fontSize: 16,
-    fontSizeHeading1: 40,
-    fontSizeHeading2: 32,
-    fontSizeHeading3: 26,
+    fontSize: 14,
+    fontSizeHeading1: 35,
+    fontSizeHeading2: 28,
+    fontSizeHeading3: 23,
     linkDecoration: 'none',
 
     //Form
