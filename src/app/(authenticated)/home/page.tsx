@@ -205,14 +205,26 @@ export default function HomePage() {
   return (
     <PageLayout layout="full-width">
       <Row gutter={[16, 16]} className="bg-gray-100 px-1 pb-2">
-        <Col xs={24} lg={19}>
+        <Col xs={24} lg={18}>
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
             <div>Error loading meals: {error.message}</div>
           ) : (
             groupedMeals.map(([tag, meals]) => (
-              <TagGroup key={tag} tag={tag} meals={meals.map(meal => ({...meal, photoUrl: meal.photoUrl || meal.imageUrl}))} addToCart={addToCart} smallFontSize={true} />
+              <TagGroup 
+                key={tag} 
+                tag={tag} 
+                meals={meals.map(meal => ({
+                  ...meal, 
+                  photoUrl: meal.photoUrl || meal.imageUrl,
+                  name: meal.name,
+                  price: meal.price
+                }))} 
+                addToCart={addToCart} 
+                smallFontSize={true} 
+                spacing="small" 
+              />
             ))
           )}
           {hasNextPage && (
@@ -221,7 +233,7 @@ export default function HomePage() {
             </Button>
           )}
         </Col>
-        <Col xs={24} lg={5}>
+        <Col xs={24} lg={6}>
           <Card className="sticky top-4 px-4" style={{ width: '100%' }}>
             <h2 className="text-xl font-bold mb-4">Shopping Cart</h2>
             {cart.length === 0 ? (
@@ -237,7 +249,7 @@ export default function HomePage() {
                       onChange={(value) => updateCartItemQuantity(item.meal.id, value)}
                       style={{ width: '60px', marginRight: '8px' }}
                     />
-                    <Text style={{ marginRight: '8px' }}>{Math.round(parseFloat(item.meal?.price || '0') * item.quantity)}</Text>
+                    <Text style={{ marginRight: '8px' }}>{Math.round(parseFloat(item.meal?.price || '0') * item.quantity).toString()}</Text>
                     <DeleteOutlined
                       onClick={() => removeFromCart(item.meal.id)}
                       style={{ color: 'red', cursor: 'pointer' }}
@@ -247,7 +259,7 @@ export default function HomePage() {
               ))
             )}
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <p className="text-xl font-bold">Total: {getTotalAmount}</p>
+              <p className="text-xl font-bold">Total: {getTotalAmount.toString()}</p>
             </div>
             <div className="customer-search-container mt-6">
               <Select

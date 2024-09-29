@@ -13,15 +13,16 @@ interface TagGroupProps {
   }[];
   addToCart: (meal: any) => void;
   smallFontSize?: boolean;
+  spacing?: 'small' | 'default';
 }
 
-export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, smallFontSize = false }) => {
+export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, smallFontSize = false, spacing = 'default' }) => {
   const titleStyle = smallFontSize ? { fontSize: '18px' } : {};
   const textStyle = smallFontSize ? { fontSize: '12px' } : {};
 
   return (
-    <div className="mb-8">
-      <Title level={3} className="mb-4" style={titleStyle}>{tag}</Title>
+    <div className="mb-4">
+      <Title level={3} className={spacing === 'small' ? 'mb-2' : 'mb-4'} style={titleStyle}>{tag}</Title>
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-1">
         {meals.map((meal) => (
           <Card
@@ -33,9 +34,9 @@ export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, small
           >
             <Card.Meta
               title={
-                <div style={{ display: 'flex', justifyContent: 'space-between', ...textStyle }}>
-                  <Text>{meal.name}</Text>
-                  <Text>{Math.round(parseFloat(meal.price))}</Text>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', ...textStyle }}>
+                  <Text style={{ flex: 1, marginRight: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{meal.name}</Text>
+                  <Text strong style={{ whiteSpace: 'nowrap' }}>{Math.round(parseFloat(meal.price)).toString()}</Text>
                 </div>
               }
             />
