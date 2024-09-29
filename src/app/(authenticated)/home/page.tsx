@@ -32,13 +32,15 @@ export default function HomePage() {
       take: pageSize,
     },
     {
-      getNextPageParam: (lastPage, allPages) => ({ cursor: allPages.length * pageSize }),
+      getNextPageParam: (lastPage, allPages) => ({ skip: allPages.length * pageSize }),
     }
   )
 
   useEffect(() => {
     if (error) {
-      enqueueSnackbar(`Error loading meals: ${JSON.stringify(error)}`, { variant: 'error' });
+      const errorMessage = error.message || 'An unexpected error occurred';
+      const formattedError = error.cause?.code ? `${errorMessage} (Code: ${error.cause.code})` : errorMessage;
+      enqueueSnackbar(`Error loading meals: ${formattedError}`, { variant: 'error' });
     }
   }, [error, enqueueSnackbar]);
 
@@ -61,13 +63,15 @@ export default function HomePage() {
   useEffect(() => {
     const fetchMeals = async () => {
       try {
-        await fetchNextPage();
+        await fetchNextPage({ pageParam: { skip: (page - 1) * pageSize, take: pageSize } });
       } catch (error) {
-        enqueueSnackbar(`Error fetching meals: ${JSON.stringify(error)}`, { variant: 'error' });
+        const errorMessage = error.message || 'An unexpected error occurred';
+        const formattedError = error.cause?.code ? `${errorMessage} (Code: ${error.cause.code})` : errorMessage;
+        enqueueSnackbar(`Error fetching meals: ${formattedError}`, { variant: 'error' });
       }
     };
     fetchMeals();
-  }, [fetchNextPage, enqueueSnackbar]);
+  }, [fetchNextPage, enqueueSnackbar, page, pageSize]);
   const addToCart = useCallback((meal: any) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.meal.id === meal.id)
