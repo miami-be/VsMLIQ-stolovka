@@ -27,7 +27,9 @@ export default function HomePage() {
 
   const { data: meals, fetchNextPage, hasNextPage } = Api.meal.findMany.useInfiniteQuery(
     {
+      where: { isActive: true },
       include: { mealTags: true },
+      select: { id: true, name: true, price: true, photoUrl: true, mealTags: true },
       take: pageSize,
     },
     {
@@ -45,10 +47,8 @@ export default function HomePage() {
   const { mutateAsync: createOrder } = Api.order.create.useMutation()
 
   const filteredMeals = useMemo(() => 
-    meals?.pages.flatMap(page => page.items).filter(
-      meal =>
-        selectedTags.length === 0 ||
-        meal.mealTags?.some(tag => selectedTags.includes(tag.name || '')),
+    meals?.pages.flatMap(page => page.items).filter(meal => 
+      meal.isActive && (selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name || '')))
     ),
     [meals, selectedTags]
   )
@@ -156,7 +156,9 @@ export default function HomePage() {
                   >
                     <Card.Meta
                       title={meal?.name}
-                      description={meal?.mealTags?.map(tag => tag?.name).join(', ')}
+                      description={
+                        <div>{meal?.mealTags?.map(tag => tag?.name).join(', ')}</div>
+                      }
                     />
                   </Card>
                 </Col>

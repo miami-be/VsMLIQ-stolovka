@@ -23,6 +23,7 @@ model Meal {
   name        String?
   price       String?
   photoUrl    String?
+  isActive    Boolean     @default(true)
   mealTags    MealTag[]   @relation("meal")
   orderItems  OrderItem[] @relation("meal")
   dateCreated DateTime    @default(now())
