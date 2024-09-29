@@ -12,6 +12,7 @@ import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
 import { TagGroup } from '@/designSystem/ui/TagGroup'
 import dayjs from 'dayjs'
+import { ZodError } from 'zod'
 
 const MEAL_GROUP_ORDER = ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб']
 
@@ -20,9 +21,9 @@ export default function HomePage() {
   const { enqueueSnackbar } = useSnackbar()
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [cart, setCart] = useState<{ meal: any; quantity: number }[]>([])
-  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-  const [customerBalance, setCustomerBalance] = useState<string>('0')
+  const [cart, setCart] = useState<{ meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl?: string }; quantity: number }[]>([])
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; balance: string } | null>(null)
+  const [customerBalance, setCustomerBalance] = useState<number>(0)
   const [paymentType, setPaymentType] = useState<string>('Balance')
   const [isCustomerListVisible, setIsCustomerListVisible] = useState(false)
   const [filteredMeals, setFilteredMeals] = useState<any[]>([])
@@ -49,9 +50,7 @@ export default function HomePage() {
   useEffect(() => {
     if (error) {
       const errorMessage = error.message || 'An unexpected error occurred';
-      const nestedError = error.cause?.message || error.cause?.code;
-      const formattedError = nestedError ? `${errorMessage} (${nestedError})` : errorMessage;
-      enqueueSnackbar(`Error loading meals: ${formattedError}`, { variant: 'error' });
+      enqueueSnackbar(`Error loading meals: ${errorMessage}`, { variant: 'error' });
     }
   }, [error, enqueueSnackbar]);
 
@@ -63,9 +62,7 @@ export default function HomePage() {
   useEffect(() => {
     if (customerError) {
       const errorMessage = customerError.message || 'An unexpected error occurred';
-      const nestedError = customerError.cause?.message || customerError.cause?.code;
-      const formattedError = nestedError ? `${errorMessage} (${nestedError})` : errorMessage;
-      enqueueSnackbar(`Error fetching customers: ${formattedError}`, { variant: 'error' });
+      enqueueSnackbar(`Error fetching customers: ${errorMessage}`, { variant: 'error' });
     }
   }, [customerError, enqueueSnackbar]);
 
@@ -119,7 +116,7 @@ export default function HomePage() {
     };
     fetchMeals();
   }, [fetchNextPage, enqueueSnackbar]);
-  const addToCart = useCallback((meal: any) => {
+  const addToCart = useCallback((meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl?: string }) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.meal.id === meal.id)
       if (existingItem) {
@@ -170,14 +167,12 @@ export default function HomePage() {
     try {
       const currentDate = dayjs().format();
       if (paymentType === 'Balance') {
-        const customerBalanceFloat = parseFloat(customerBalance);
-        const totalAmountFloat = getTotalAmount;
-        const newBalance = (customerBalanceFloat - totalAmountFloat).toFixed(2);
+        const newBalance = customerBalance - getTotalAmount;
         await updateCustomer({
           where: { id: selectedCustomer.id },
           data: { balance: newBalance },
         });
-        if (parseFloat(newBalance) < 0) {
+        if (newBalance < 0) {
           enqueueSnackbar('Warning: Customer balance is now negative', { variant: 'warning' });
         }
       }
@@ -231,14 +226,14 @@ export default function HomePage() {
     return () => window.removeEventListener('scroll', throttledHandleScroll)
   }, [handleScroll])
 
-  const handleCustomerSelect = (value: string, option: any) => {
+  const handleCustomerSelect = (value: string, option: { customer: { id: string; balance: string } }) => {
     setSelectedCustomer(option.customer)
-    setCustomerBalance(option.customer.balance || '0')
+    setCustomerBalance(parseFloat(option.customer.balance || '0'))
   }
 
   const handleClearCustomer = () => {
     setSelectedCustomer(null)
-    setCustomerBalance('0')
+    setCustomerBalance(0)
   }
 
   return (
@@ -255,16 +250,14 @@ export default function HomePage() {
                 key={tag} 
                 tag={tag} 
                 meals={meals.map(meal => ({
-                  ...meal, 
-                  photoUrl: meal.photoUrl || meal.imageUrl,
+                  id: meal.id,
                   name: meal.name,
                   price: meal.price,
-                  tags: meal.mealTags.map(tag => tag.name)
+                  mealTags: meal.mealTags,
+                  imageUrl: meal.photoUrl || meal.imageUrl
                 }))} 
                 addToCart={addToCart} 
                 removeTag={handleRemoveTag}
-                smallFontSize={true} 
-                spacing="small" 
               />
             ))
           )}
@@ -323,8 +316,8 @@ export default function HomePage() {
               </Select>
               {selectedCustomer && (
                 <div className="mt-2">
-                  <Text>Current Balance: {parseFloat(customerBalance).toFixed(2)}</Text>
-                  {parseFloat(customerBalance) < 0 && (
+                  <Text>Current Balance: {customerBalance.toFixed(2)}</Text>
+                  {customerBalance < 0 && (
                     <Text type="danger"> (Negative Balance)</Text>
                   )}
                 </div>

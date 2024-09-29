@@ -9,27 +9,32 @@ interface TagGroupProps {
     id: string;
     name: string;
     price: string;
-    photoUrl?: string;
+    mealTags: { name: string }[];
+    imageUrl?: string;
   }[];
   addToCart: (meal: any) => void;
+  removeTag: (tag: string) => void;
   smallFontSize?: boolean;
   spacing?: 'small' | 'default';
 }
 
-export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, smallFontSize = false, spacing = 'default' }) => {
+export const TagGroup: React.FC<TagGroupProps> = ({ tag, meals, addToCart, removeTag, smallFontSize = false, spacing = 'default' }) => {
   const titleStyle = smallFontSize ? { fontSize: '18px' } : {};
   const textStyle = smallFontSize ? { fontSize: '12px' } : {};
 
   return (
     <div className="mb-4">
-      <Title level={3} className={spacing === 'small' ? 'mb-2' : 'mb-4'} style={titleStyle}>{tag}</Title>
+      <div className="flex justify-between items-center">
+        <Title level={3} className={spacing === 'small' ? 'mb-2' : 'mb-4'} style={titleStyle}>{tag}</Title>
+        <button onClick={() => removeTag(tag)} className="text-red-500 hover:text-red-700">Remove</button>
+      </div>
       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-1">
         {meals.map((meal) => (
           <Card
             key={meal.id}
             hoverable
             size="small"
-            cover={<img alt={meal.name} src={meal.photoUrl || '/default-meal-image.jpg'} className="h-16 object-cover" />}
+            cover={<img alt={meal.name} src={meal.imageUrl || '/default-meal-image.jpg'} className="h-16 object-cover" />}
             onClick={() => addToCart(meal)}
           >
             <Card.Meta

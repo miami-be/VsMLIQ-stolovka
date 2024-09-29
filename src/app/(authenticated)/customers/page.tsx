@@ -91,10 +91,9 @@ export default function CustomersPage() {
         })
         enqueueSnackbar('Customer updated successfully', { variant: 'success' })
       } else if (modalMode === 'topup') {
-        const newBalance = (
-          parseFloat(selectedCustomer!.balance || '0') +
-          parseFloat(values.topup)
-        ).toString()
+        const newBalance = 
+          Number(selectedCustomer!.balance || '0') +
+          Number(values.topup)
         await updateCustomer({
           where: { id: selectedCustomer!.id },
           data: { balance: newBalance },
@@ -122,7 +121,7 @@ export default function CustomersPage() {
       title: 'Balance',
       dataIndex: 'balance',
       key: 'balance',
-      render: (balance: string) => parseFloat(balance || '0').toFixed(2),
+      render: (balance: string) => Number(balance || '0').toFixed(2),
     },
     {
       title: 'Actions',
