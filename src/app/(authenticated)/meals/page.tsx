@@ -54,39 +54,28 @@ export default function MealsPage() {
 
   const handleAddOrEdit = async (values: any) => {
     try {
-      const uniqueTags = Array.from(new Set(values.tags));
+      const uniqueTags = [...new Set(values.tags)];
       const mealData = {
         name: values.name,
         price: values.price.toString(),
         photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : '',
         isActive: values.isActive,
+        mealTags: {
+          deleteMany: {},
+          create: uniqueTags.map((tag: string) => ({ name: tag })),
+        },
       }
       console.log('Meal data to be saved:', mealData);
 
       if (editingMeal) {
-        const existingTags = editingMeal.mealTags?.map(tag => tag.name) || [];
-        const tagsToRemove = existingTags.filter(tag => !uniqueTags.includes(tag));
-        const tagsToAdd = uniqueTags.filter(tag => !existingTags.includes(tag));
-
         await updateMeal({
           where: { id: editingMeal.id },
-          data: {
-            ...mealData,
-            mealTags: {
-              deleteMany: { name: { in: tagsToRemove } },
-              create: tagsToAdd.map((tag: string) => ({ name: tag })),
-            },
-          },
+          data: mealData,
         })
         enqueueSnackbar('Meal updated successfully', { variant: 'success' })
       } else {
         await createMeal({
-          data: {
-            ...mealData,
-            mealTags: {
-              create: uniqueTags.map((tag: string) => ({ name: tag })),
-            },
-          },
+          data: mealData,
         })
         enqueueSnackbar('Meal added successfully', { variant: 'success' })
       }
@@ -143,18 +132,15 @@ export default function MealsPage() {
       title: 'Tags',
       dataIndex: 'mealTags',
       key: 'mealTags',
-      render: (tags: any[] | undefined) => {
-        const uniqueTags = Array.from(new Set(tags?.map(tag => tag.name) || []));
-        return (
-          <>
-            {uniqueTags.map(tag => (
-              <Tag color="blue" key={tag}>
-                {tag}
-              </Tag>
-            ))}
-          </>
-        );
-      },
+      render: (tags: any[] | undefined) => (
+        <>
+          {Array.from(new Set(tags?.map(tag => tag.name) || [])).map(tag => (
+            <Tag color="blue" key={tag}>
+              {tag}
+            </Tag>
+          ))}
+        </>
+      ),
     },
     {
       title: 'Status',
@@ -249,10 +235,7 @@ export default function MealsPage() {
       >
         <Form 
           form={form} 
-          onFinish={(values) => {
-            const uniqueTags = Array.from(new Set(values.tags));
-            handleAddOrEdit({ ...values, tags: uniqueTags });
-          }} 
+          onFinish={handleAddOrEdit} 
           layout="vertical"
         >
           <Form.Item 
@@ -292,7 +275,7 @@ export default function MealsPage() {
                 form.setFieldsValue({ tags: currentTags.filter((tag: string) => tag !== value) });
               }}
               tagRender={(props) => {
-                const { label, value, closable, onClose } = props;
+                const { label, closable, onClose } = props;
                 return (
                   <Tag
                     color="blue"
@@ -301,7 +284,6 @@ export default function MealsPage() {
                     style={{ marginRight: 3 }}
                   >
                     {label}
-                    {closable && <CloseCircleOutlined onClick={() => onClose()} style={{ marginLeft: 3 }} />}
                   </Tag>
                 );
               }}

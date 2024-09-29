@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
-import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { Typography, Input, Button, Row, Col, Card, InputNumber, Select, Tag, Collapse } from 'antd'
+import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined, CaretRightOutlined } from '@ant-design/icons'
 const { Text } = Typography
+const { Panel } = Collapse
 import { useUserContext } from '@/core/context'
 import { useSnackbar } from 'notistack'
 import { Api } from '@/core/trpc'
@@ -21,6 +22,7 @@ export default function HomePage() {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [paymentType, setPaymentType] = useState<string>('Balance')
   const [isCustomerListVisible, setIsCustomerListVisible] = useState(false)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [page, setPage] = useState(1)
   const pageSize = 20
 
@@ -71,7 +73,15 @@ export default function HomePage() {
         groups[tag.name].push(meal);
       });
     });
-    return { groups };
+    const orderPriority = ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб'];
+    return Object.entries(groups).sort((a, b) => {
+      const indexA = orderPriority.indexOf(a[0]);
+      const indexB = orderPriority.indexOf(b[0]);
+      if (indexA === -1 && indexB === -1) return a[0].localeCompare(b[0]);
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
   }, [meals])
 
   useEffect(() => {
@@ -185,41 +195,45 @@ export default function HomePage() {
           ) : error ? (
             <div>Error loading meals: {error.message}</div>
           ) : (
-            Object.entries(groupedMeals.groups).map(([category, meals]) => (
-              <div key={category}>
-                <h2 className="text-xl font-bold mb-4">{category}</h2>
-                <Row gutter={[16, 16]}>
-                  {meals.map(meal => (
-                    <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
-                      <Card
-                        hoverable
-                        onClick={() => addToCart(meal)}
-                        cover={
-                          <div style={{ height: '150px', overflow: 'hidden' }}>
-                            <img
-                              src={meal?.photoUrl || '/placeholder.jpg'}
-                              alt={meal?.name || 'Meal'}
-                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                            />
-                          </div>
-                        }
-                        bodyStyle={{ padding: '12px' }}
-                      >
-                        <Card.Meta
-                          title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
-                          description={
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                              <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
-                              <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
+            <Collapse
+              defaultActiveKey={[groupedMeals[0]?.[0]]}
+              expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
+            >
+              {groupedMeals.map(([category, meals]) => (
+                <Panel header={<h2 className="text-xl font-bold">{category}</h2>} key={category}>
+                  <Row gutter={[16, 16]}>
+                    {meals.map(meal => (
+                      <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
+                        <Card
+                          hoverable
+                          onClick={() => addToCart(meal)}
+                          cover={
+                            <div style={{ height: '150px', overflow: 'hidden' }}>
+                              <img
+                                src={meal?.photoUrl || '/placeholder.jpg'}
+                                alt={meal?.name || 'Meal'}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
                             </div>
                           }
-                        />
-                      </Card>
-                    </Col>
-                  ))}
-                </Row>
-              </div>
-            ))
+                          bodyStyle={{ padding: '12px' }}
+                        >
+                          <Card.Meta
+                            title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
+                            description={
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                                <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
+                                <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
+                              </div>
+                            }
+                          />
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </Panel>
+              ))}
+            </Collapse>
           )}
         </Col>
         <Col xs={24} lg={6}>
@@ -256,20 +270,39 @@ export default function HomePage() {
                 placeholder="Search for a customer"
                 style={{ width: '100%' }}
                 onSearch={debouncedSearch}
-                onChange={handleCustomerSelect}
+                onChange={(values) => {
+                  handleCustomerSelect(values[0], { customer: customers?.find(c => c.id === values[0]) });
+                  setSelectedTags(values.slice(1));
+                }}
                 onSelect={() => setIsCustomerListVisible(false)}
-                value={selectedCustomer?.name || undefined}
+                value={[selectedCustomer?.id, ...selectedTags].filter(Boolean)}
                 filterOption={false}
                 notFoundContent={null}
                 suffixIcon={selectedCustomer ? <CloseCircleOutlined onClick={handleClearCustomer} /> : <SearchOutlined />}
+                mode="tags"
               >
                 {customers?.map((customer) => (
                   <Select.Option key={customer.id} value={customer.id} customer={customer}>
                     {customer.name}
                   </Select.Option>
                 ))}
+                {Array.from(new Set(meals?.pages.flatMap(page => page.flatMap(meal => meal.mealTags?.map(tag => tag.name) ?? [])) ?? [])).map(tag => (
+                  <Select.Option key={tag} value={tag}>
+                    {tag}
+                  </Select.Option>
+                ))}
               </Select>
             </div>
+            {selectedTags.length > 0 && (
+              <div className='mt-4'>
+                <p className='font-semibold mb-2'>Selected Tags:</p>
+                {selectedTags.map(tag => (
+                  <Tag key={tag} closable onClose={() => setSelectedTags(selectedTags.filter(t => t !== tag))}>
+                    {tag}
+                  </Tag>
+                ))}
+              </div>
+            )}
             <div className="mt-6">
               <p className="font-semibold mb-2">Payment Method</p>
               <div className="flex flex-wrap gap-2">
