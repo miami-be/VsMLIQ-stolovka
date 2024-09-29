@@ -61,7 +61,6 @@ export default function MealsPage() {
         photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : '',
         isActive: values.isActive ?? true,
         mealTags: {
-          deleteMany: {},
           create: uniqueTags.map((tag: string) => ({ name: tag })),
         },
       }
@@ -84,7 +83,10 @@ export default function MealsPage() {
       refetch()
     } catch (error) {
       console.error('Error saving meal:', error);
-      if (error.cause?.code === 'BAD_REQUEST' && error.cause?.zodError) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        const errorMessage = error.message.split('\n').pop() || error.message;
+        enqueueSnackbar(`Prisma Error: ${errorMessage}`, { variant: 'error' });
+      } else if (error.cause?.code === 'BAD_REQUEST' && error.cause?.zodError) {
         const zodErrors = error.cause.zodError.fieldErrors;
         Object.entries(zodErrors).forEach(([field, errors]) => {
           enqueueSnackbar(`${field}: ${errors[0]}`, { variant: 'error' });
