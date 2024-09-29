@@ -153,23 +153,23 @@ export default function HomePage() {
             <Row gutter={[16, 16]}>
               {filteredMeals.map(meal => (
                 meal && (
-                  <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
+                  <Col xs={12} sm={6} md={4} lg={3} key={meal.id}>
                     <Card
                       cover={
                         <img
                           alt={meal?.name}
                           src={meal?.photoUrl}
-                          className="h-32 object-cover"
+                          className="h-24 object-cover"
                         />
                       }
                       hoverable
                     >
                       <Card.Meta
                         title={meal?.name}
-                        style={{ fontSize: '0.9rem' }}
+                        style={{ fontSize: '0.8rem' }}
                       />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                        <Text style={{ fontSize: '0.8rem' }}>{meal?.price}</Text>
+                        <Text style={{ fontSize: '0.7rem' }}>{meal?.price}</Text>
                         <Button 
                           type="text" 
                           icon={<ShoppingCartOutlined />}
