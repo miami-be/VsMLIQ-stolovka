@@ -166,7 +166,7 @@ export default function HomePage() {
                     >
                       <Card.Meta
                         title={meal?.name}
-                        style={{ fontSize: '0.8rem' }}
+                        style={{ fontSize: '0.7rem' }}
                       />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
                         <Text style={{ fontSize: '0.7rem' }}>{meal?.price}</Text>
