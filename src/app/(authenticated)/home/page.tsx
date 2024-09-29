@@ -28,7 +28,7 @@ export default function HomePage() {
   const { data: meals, fetchNextPage, hasNextPage, isLoading, error } = Api.meal.findMany.useInfiniteQuery(
     {
       where: { isActive: true },
-      include: { mealTags: true },
+      include: { mealTags: { where: { name: { in: ['Завтрак', 'Основное', 'Гарнир', 'Напитки', 'Хлеб'] } } } },
       take: pageSize,
     },
     {
@@ -63,12 +63,22 @@ export default function HomePage() {
 
   const { mutateAsync: createOrder } = Api.order.create.useMutation()
 
-  const filteredMeals = useMemo(() => {
+  const groupedMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
-    return allMeals.filter(meal => 
-      selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name || ''))
-    );
-  }, [meals, selectedTags])
+    const groups = {
+      'Завтрак': [],
+      'Основное': [],
+      'Гарнир': [],
+      'Напитки': [],
+      'Хлеб': [],
+      'Другое': []
+    };
+    allMeals.forEach(meal => {
+      const tag = meal.mealTags?.find(tag => Object.keys(groups).includes(tag.name))?.name || 'Другое';
+      groups[tag].push(meal);
+    });
+    return groups;
+  }, [meals])
 
   useEffect(() => {
     const fetchMeals = async () => {
@@ -180,41 +190,44 @@ export default function HomePage() {
             <div>Loading meals...</div>
           ) : error ? (
             <div>Error loading meals: {error.message}</div>
-          ) : filteredMeals && filteredMeals.length > 0 ? (
-            <Row gutter={[16, 16]}>
-              {filteredMeals.map(meal => (
-                meal && (
-                  <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
-                    <Card
-                      hoverable
-                      onClick={() => addToCart(meal)}
-                      cover={
-                        <div style={{ height: '150px', overflow: 'hidden' }}>
-                          <img
-                            src={meal?.photoUrl || '/placeholder.jpg'}
-                            alt={meal?.name || 'Meal'}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                          />
-                        </div>
-                      }
-                      bodyStyle={{ padding: '12px' }}
-                    >
-                      <Card.Meta
-                        title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
-                        description={
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                            <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
-                            <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
-                          </div>
-                        }
-                      />
-                    </Card>
-                  </Col>
-                )
-              ))}
-            </Row>
           ) : (
-            <div>No meals available</div>
+            Object.entries(groupedMeals).map(([category, meals]) => (
+              meals.length > 0 && (
+                <div key={category}>
+                  <h2 className="text-xl font-bold mb-4">{category}</h2>
+                  <Row gutter={[16, 16]}>
+                    {meals.map(meal => (
+                      <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
+                        <Card
+                          hoverable
+                          onClick={() => addToCart(meal)}
+                          cover={
+                            <div style={{ height: '150px', overflow: 'hidden' }}>
+                              <img
+                                src={meal?.photoUrl || '/placeholder.jpg'}
+                                alt={meal?.name || 'Meal'}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            </div>
+                          }
+                          bodyStyle={{ padding: '12px' }}
+                        >
+                          <Card.Meta
+                            title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
+                            description={
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                                <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
+                                <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
+                              </div>
+                            }
+                          />
+                        </Card>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              )
+            ))
           )}
         </Col>
         <Col xs={24} lg={6}>
