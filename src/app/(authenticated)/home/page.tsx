@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Typography, Input, Button, Row, Col, Card } from 'antd'
-import { ShoppingCartOutlined, SearchOutlined } from '@ant-design/icons'
+import { Typography, Input, Button, Row, Col, Card, InputNumber } from 'antd'
+import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons'
 const { Text } = Typography
 import { useUserContext } from '@/core/context'
 import { useSnackbar } from 'notistack'
@@ -94,6 +94,12 @@ export default function HomePage() {
     setCart(prevCart => prevCart.filter(item => item.meal.id !== mealId))
   }, [])
 
+  const updateCartItemQuantity = useCallback((mealId: string, newQuantity: number) => {
+    setCart(prevCart => prevCart.map(item => 
+      item.meal.id === mealId ? { ...item, quantity: newQuantity } : item
+    ).filter(item => item.quantity > 0))
+  }, [])
+
   const getTotalAmount = useMemo(() => {
     return cart.reduce(
       (total, item) =>
@@ -179,7 +185,7 @@ export default function HomePage() {
                         title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
                         description={
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                            <span style={{ fontSize: '0.8rem' }}>${meal?.price}</span>
+                            <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
                             <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
                           </div>
                         }
@@ -200,9 +206,21 @@ export default function HomePage() {
               <Text type="secondary">No data</Text>
             ) : (
               cart.map(item => (
-                <div key={item.meal?.id} className="flex justify-between mb-2">
-                  <Text>{item.meal?.name} x{item.quantity}</Text>
-                  <Text>{(parseFloat(item.meal?.price || '0') * item.quantity).toFixed(2)}</Text>
+                <div key={item.meal?.id} className="flex justify-between items-center mb-2">
+                  <Text>{item.meal?.name}</Text>
+                  <div className="flex items-center">
+                    <InputNumber
+                      min={1}
+                      value={item.quantity}
+                      onChange={(value) => updateCartItemQuantity(item.meal.id, value)}
+                      style={{ width: '60px', marginRight: '8px' }}
+                    />
+                    <Text style={{ marginRight: '8px' }}>{(parseFloat(item.meal?.price || '0') * item.quantity).toFixed(2)}</Text>
+                    <DeleteOutlined
+                      onClick={() => removeFromCart(item.meal.id)}
+                      style={{ color: 'red', cursor: 'pointer' }}
+                    />
+                  </div>
                 </div>
               ))
             )}

@@ -122,7 +122,7 @@ export default function CustomersPage() {
       title: 'Balance',
       dataIndex: 'balance',
       key: 'balance',
-      render: (balance: string) => `$${parseFloat(balance || '0').toFixed(2)}`,
+      render: (balance: string) => parseFloat(balance || '0').toFixed(2),
     },
     {
       title: 'Actions',
