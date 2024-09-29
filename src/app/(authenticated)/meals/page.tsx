@@ -54,13 +54,12 @@ export default function MealsPage() {
     try {
       const mealData = {
         name: values.name,
-        price: values.price,
-        photoUrl: values.photoUrl,
-        isActive: values.isActive,
+        price: values.price.toString(),
+        photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : '',
         mealTags: {
-          deleteMany: {},
           create: values.tags?.map((tag: string) => ({ name: tag })),
         },
+        isActive: values.isActive,
       }
       console.log('Meal data to be saved:', mealData);
 
@@ -81,7 +80,14 @@ export default function MealsPage() {
       refetch()
     } catch (error) {
       console.error('Error saving meal:', error);
-      enqueueSnackbar(`Error saving meal: ${error.message}`, { variant: 'error' })
+      if (error.cause?.code === 'BAD_REQUEST' && error.cause?.zodError) {
+        const zodErrors = error.cause.zodError.fieldErrors;
+        Object.entries(zodErrors).forEach(([field, errors]) => {
+          enqueueSnackbar(`${field}: ${errors[0]}`, { variant: 'error' });
+        });
+      } else {
+        enqueueSnackbar(`Error saving meal: ${error.message}`, { variant: 'error' })
+      }
     }
   }
 
@@ -136,10 +142,11 @@ export default function MealsPage() {
       title: 'Status',
       dataIndex: 'isActive',
       key: 'isActive',
-      render: (isActive: boolean) => (
-        <Tag color={isActive ? 'green' : 'red'}>
-          {isActive ? 'Active' : 'Inactive'}
-        </Tag>
+      render: (isActive: boolean, record: Prisma.MealGetPayload<{ include: { mealTags: true } }>) => (
+        <Switch
+          checked={isActive}
+          onChange={(checked) => handleStatusChange(record.id, checked)}
+        />
       ),
     },
     {
@@ -176,6 +183,20 @@ export default function MealsPage() {
       ),
     },
   ]
+
+  const handleStatusChange = async (id: string, isActive: boolean) => {
+    try {
+      await updateMeal({
+        where: { id },
+        data: { isActive },
+      })
+      enqueueSnackbar('Meal status updated successfully', { variant: 'success' })
+      refetch()
+    } catch (error) {
+      console.error('Error updating meal status:', error)
+      enqueueSnackbar('Error updating meal status', { variant: 'error' })
+    }
+  }
 
   return (
     <PageLayout layout="narrow">
@@ -241,12 +262,7 @@ export default function MealsPage() {
               <Button icon={<UploadOutlined />}>Upload Photo</Button>
             </Upload>
           </Form.Item>
-          <Form.Item 
-            name="isActive" 
-            label="Active" 
-            valuePropName="checked"
-            rules={[{ required: true, message: 'Please select the meal status' }]}
-          >
+          <Form.Item name="isActive" label="Status" valuePropName="checked">
             <Switch />
           </Form.Item>
         </Form>
