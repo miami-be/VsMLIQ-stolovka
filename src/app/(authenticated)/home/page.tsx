@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Typography, Input, Button, Row, Col, Card, InputNumber, Select } from 'antd'
+import { Typography, Input, Button, Row, Col, Card, InputNumber, Select, Tag } from 'antd'
 import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined } from '@ant-design/icons'
 const { Text } = Typography
 import { useUserContext } from '@/core/context'
@@ -10,6 +10,31 @@ import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem'
 import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
+
+const TagSelector = ({ tags, selectedTags, setSelectedTags, usedTags }) => {
+  const handleTagClick = (tag) => {
+    setSelectedTags(prevTags =>
+      prevTags.includes(tag)
+        ? prevTags.filter(t => t !== tag)
+        : [...prevTags, tag]
+    )
+  }
+
+  return (
+    <div className="mb-4">
+      {tags?.filter(tag => usedTags.includes(tag.name)).map(tag => (
+        <Tag
+          key={tag.id}
+          onClick={() => handleTagClick(tag.name)}
+          color={selectedTags.includes(tag.name) ? 'blue' : 'default'}
+          style={{ cursor: 'pointer', marginBottom: '8px' }}
+        >
+          {tag.name}
+        </Tag>
+      ))}
+    </div>
+  )
+}
 
 export default function HomePage() {
   const router = useRouter()
@@ -65,20 +90,21 @@ export default function HomePage() {
 
   const groupedMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
-    const groups = {
-      'Завтрак': [],
-      'Основное': [],
-      'Гарнир': [],
-      'Напитки': [],
-      'Хлеб': [],
-      'Другое': []
-    };
+    const groups = {};
+    const usedTags = new Set();
     allMeals.forEach(meal => {
-      const tag = meal.mealTags?.find(tag => Object.keys(groups).includes(tag.name))?.name || 'Другое';
-      groups[tag].push(meal);
+      if (selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name))) {
+        meal.mealTags?.forEach(tag => {
+          if (!groups[tag.name]) {
+            groups[tag.name] = [];
+          }
+          groups[tag.name].push(meal);
+          usedTags.add(tag.name);
+        });
+      }
     });
-    return groups;
-  }, [meals])
+    return { groups, usedTags: Array.from(usedTags) };
+  }, [meals, selectedTags])
 
   useEffect(() => {
     const fetchMeals = async () => {
@@ -186,17 +212,17 @@ export default function HomePage() {
     <PageLayout layout="full-width">
       <Row gutter={[16, 16]} className="bg-gray-100 px-4 py-8">
         <Col xs={24} lg={18}>
+          <TagSelector tags={tags} selectedTags={selectedTags} setSelectedTags={setSelectedTags} usedTags={groupedMeals.usedTags} />
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
             <div>Error loading meals: {error.message}</div>
           ) : (
-            Object.entries(groupedMeals).map(([category, meals]) => (
-              meals.length > 0 && (
-                <div key={category}>
-                  <h2 className="text-xl font-bold mb-4">{category}</h2>
-                  <Row gutter={[16, 16]}>
-                    {meals.map(meal => (
+            Object.entries(groupedMeals.groups).map(([category, meals]) => (
+              <div key={category}>
+                <h2 className="text-xl font-bold mb-4">{category}</h2>
+                <Row gutter={[16, 16]}>
+                  {meals.map(meal => (
                       <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
                         <Card
                           hoverable
