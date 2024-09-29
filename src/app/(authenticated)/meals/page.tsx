@@ -62,6 +62,7 @@ export default function MealsPage() {
           create: values.tags?.map((tag: string) => ({ name: tag })),
         },
       }
+      console.log('Meal data to be saved:', mealData);
 
       if (editingMeal) {
         await updateMeal({
@@ -79,7 +80,8 @@ export default function MealsPage() {
       form.resetFields()
       refetch()
     } catch (error) {
-      enqueueSnackbar('Error saving meal', { variant: 'error' })
+      console.error('Error saving meal:', error);
+      enqueueSnackbar(`Error saving meal: ${error.message}`, { variant: 'error' })
     }
   }
 
@@ -207,10 +209,24 @@ export default function MealsPage() {
         onCancel={() => setIsModalVisible(false)}
       >
         <Form form={form} onFinish={handleAddOrEdit} layout="vertical">
-          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+          <Form.Item 
+            name="name" 
+            label="Name" 
+            rules={[
+              { required: true, message: 'Please input the meal name!' },
+              { max: 100, message: 'Name cannot be longer than 100 characters' }
+            ]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="price" label="Price" rules={[{ required: true }]}>
+          <Form.Item 
+            name="price" 
+            label="Price" 
+            rules={[
+              { required: true, message: 'Please input the meal price!' },
+              { type: 'number', min: 0, message: 'Price must be a positive number' }
+            ]}
+          >
             <InputNumber min={0} step={0.01} style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="tags" label="Tags">
@@ -225,7 +241,12 @@ export default function MealsPage() {
               <Button icon={<UploadOutlined />}>Upload Photo</Button>
             </Upload>
           </Form.Item>
-          <Form.Item name="isActive" label="Active" valuePropName="checked">
+          <Form.Item 
+            name="isActive" 
+            label="Active" 
+            valuePropName="checked"
+            rules={[{ required: true, message: 'Please select the meal status' }]}
+          >
             <Switch />
           </Form.Item>
         </Form>
