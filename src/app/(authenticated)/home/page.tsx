@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback, useEffect } from 'react'
-import { Typography, Input, Button, Row, Col, Card, InputNumber, Select, Tag, Collapse } from 'antd'
+import { Typography, Input, Button, Row, Col, Card, InputNumber, Select, Tag, Collapse, Space } from 'antd'
 import { ShoppingCartOutlined, SearchOutlined, DeleteOutlined, CloseCircleOutlined, CaretRightOutlined } from '@ant-design/icons'
 const { Text } = Typography
 const { Panel } = Collapse
@@ -11,6 +11,7 @@ import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem/layouts/PageLayout'
 import { useRouter } from 'next/navigation'
 import debounce from 'lodash/debounce'
+import throttle from 'lodash/throttle'
 
 export default function HomePage() {
   const router = useRouter()
@@ -23,6 +24,7 @@ export default function HomePage() {
   const [paymentType, setPaymentType] = useState<string>('Balance')
   const [isCustomerListVisible, setIsCustomerListVisible] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const pageSize = 20
 
@@ -33,7 +35,12 @@ export default function HomePage() {
       take: pageSize,
     },
     {
-      getNextPageParam: (lastPage, allPages) => ({ skip: allPages.length * pageSize, take: pageSize }),
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.length < pageSize) {
+          return undefined;
+        }
+        return { skip: allPages.length * pageSize, take: pageSize };
+      },
     }
   )
 
@@ -83,6 +90,10 @@ export default function HomePage() {
       return indexA - indexB;
     });
   }, [meals])
+
+  const uniqueTags = useMemo(() => {
+    return Array.from(new Set(groupedMeals.map(([tag]) => tag)));
+  }, [groupedMeals])
 
   useEffect(() => {
     const fetchMeals = async () => {
@@ -167,15 +178,16 @@ export default function HomePage() {
   }, 300)
 
   const handleScroll = useCallback(() => {
-    if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
-    if (hasNextPage) {
+    if (window.innerHeight + document.documentElement.scrollTop < document.documentElement.offsetHeight - 200) return;
+    if (hasNextPage && !isLoading) {
       fetchNextPage()
     }
-  }, [hasNextPage, fetchNextPage])
+  }, [hasNextPage, fetchNextPage, isLoading])
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    const throttledHandleScroll = throttle(handleScroll, 200);
+    window.addEventListener('scroll', throttledHandleScroll)
+    return () => window.removeEventListener('scroll', throttledHandleScroll)
   }, [handleScroll])
 
   const handleCustomerSelect = (value: string, option: any) => {
@@ -188,51 +200,67 @@ export default function HomePage() {
 
   return (
     <PageLayout layout="full-width">
-      <Row gutter={[16, 16]} className="bg-gray-100 px-4 py-8">
+      <Row gutter={[16, 16]} className="bg-gray-100 px-4 pb-8">
         <Col xs={24} lg={18}>
+          <Row className="mb-4">
+            <Space wrap>
+              {uniqueTags.map(tag => (
+                <Tag
+                  key={tag}
+                  color={selectedTag === tag ? 'blue' : 'default'}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                >
+                  {tag}
+                </Tag>
+              ))}
+            </Space>
+          </Row>
           {isLoading ? (
             <div>Loading meals...</div>
           ) : error ? (
             <div>Error loading meals: {error.message}</div>
           ) : (
             <Collapse
-              defaultActiveKey={[groupedMeals[0]?.[0]]}
+              defaultActiveKey={selectedTag ? [selectedTag] : [groupedMeals[0]?.[0]]}
               expandIcon={({ isActive }) => <CaretRightOutlined rotate={isActive ? 90 : 0} />}
             >
-              {groupedMeals.map(([category, meals]) => (
-                <Panel header={<h2 className="text-xl font-bold">{category}</h2>} key={category}>
-                  <Row gutter={[16, 16]}>
-                    {meals.map(meal => (
-                      <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
-                        <Card
-                          hoverable
-                          onClick={() => addToCart(meal)}
-                          cover={
-                            <div style={{ height: '150px', overflow: 'hidden' }}>
-                              <img
-                                src={meal?.photoUrl || '/placeholder.jpg'}
-                                alt={meal?.name || 'Meal'}
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-                            </div>
-                          }
-                          bodyStyle={{ padding: '12px' }}
-                        >
-                          <Card.Meta
-                            title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
-                            description={
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                                <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
-                                <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
+              {groupedMeals
+                .filter(([category]) => !selectedTag || category === selectedTag)
+                .map(([category, meals]) => (
+                  <Panel header={<h2 className="text-xl font-bold">{category}</h2>} key={category}>
+                    <Row gutter={[16, 16]}>
+                      {meals.map(meal => (
+                        <Col xs={12} sm={8} md={6} lg={4} key={meal.id}>
+                          <Card
+                            hoverable
+                            onClick={() => addToCart(meal)}
+                            cover={
+                              <div style={{ height: '150px', overflow: 'hidden' }}>
+                                <img
+                                  src={meal?.photoUrl || '/placeholder.jpg'}
+                                  alt={meal?.name || 'Meal'}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
                               </div>
                             }
-                          />
-                        </Card>
-                      </Col>
-                    ))}
-                  </Row>
-                </Panel>
-              ))}
+                            bodyStyle={{ padding: '12px' }}
+                          >
+                            <Card.Meta
+                              title={<span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{meal?.name}</span>}
+                              description={
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                                  <span style={{ fontSize: '0.8rem' }}>{meal?.price}</span>
+                                  <ShoppingCartOutlined style={{ fontSize: '1.2rem', color: '#4CAF50' }} />
+                                </div>
+                              }
+                            />
+                          </Card>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Panel>
+                ))}
             </Collapse>
           )}
         </Col>
