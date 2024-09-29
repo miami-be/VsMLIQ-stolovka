@@ -40,7 +40,6 @@ orders        Order[]      @relation("customer")
       dateUpdated DateTime @updatedAt  @default(now())
       @@allow("all", true)
 }
-
 model Order {
 
     id                String        @id @default(uuid())  
