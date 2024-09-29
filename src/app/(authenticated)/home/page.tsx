@@ -32,17 +32,15 @@ export default function HomePage() {
       take: pageSize,
     },
     {
-      getNextPageParam: (lastPage, allPages) => allPages.length * pageSize,
+      getNextPageParam: (lastPage, allPages) => ({ cursor: allPages.length * pageSize }),
     }
   )
 
   useEffect(() => {
     if (error) {
-      enqueueSnackbar(`Error loading meals: ${error.message}`, { variant: 'error' });
+      enqueueSnackbar(`Error loading meals: ${JSON.stringify(error)}`, { variant: 'error' });
     }
   }, [error, enqueueSnackbar]);
-
-  console.log('Meals data:', meals);
 
   const { data: tags } = Api.mealTag.findMany.useQuery({})
 
@@ -55,11 +53,9 @@ export default function HomePage() {
 
   const filteredMeals = useMemo(() => {
     const allMeals = meals?.pages.flatMap(page => page) || [];
-    const filtered = allMeals.filter(meal => 
+    return allMeals.filter(meal => 
       selectedTags.length === 0 || meal.mealTags?.some(tag => selectedTags.includes(tag.name || ''))
     );
-    console.log('Filtered meals:', filtered);
-    return filtered;
   }, [meals, selectedTags])
 
   useEffect(() => {
@@ -67,12 +63,11 @@ export default function HomePage() {
       try {
         await fetchNextPage();
       } catch (error) {
-        enqueueSnackbar(`Error fetching meals: ${error.message}`, { variant: 'error' });
+        enqueueSnackbar(`Error fetching meals: ${JSON.stringify(error)}`, { variant: 'error' });
       }
     };
     fetchMeals();
   }, [fetchNextPage, enqueueSnackbar]);
-
   const addToCart = useCallback((meal: any) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.meal.id === meal.id)
@@ -178,9 +173,7 @@ export default function HomePage() {
                           type="text" 
                           icon={<ShoppingCartOutlined />}
                           onClick={() => addToCart(meal)}
-                        >
-                          Add to Cart
-                        </Button>
+                        />
                       </div>
                     </Card>
                   </Col>
