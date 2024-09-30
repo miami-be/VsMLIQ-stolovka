@@ -109,13 +109,13 @@ export default function OrdersPage() {
           onChange={handleDateSearch}
           placeholder="Search by date"
           style={{ width: 200 }}
-          prefix={<CalendarOutlined />}
+        prefix={<CalendarOutlined rev={undefined} />}
         />
         <Input
           placeholder="Search by customer name"
           onChange={handleCustomerSearch}
           style={{ width: 200 }}
-          prefix={<UserOutlined />}
+        prefix={<UserOutlined rev={undefined} />}
         />
       </Space>
 

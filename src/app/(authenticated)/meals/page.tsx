@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Prisma, Meal } from '@prisma/client'
+import { Prisma, MealTag } from '@prisma/client'
 import {
   Typography,
   Table,
@@ -55,39 +55,36 @@ export default function MealsPage() {
   const handleAddOrEdit = async (values: any) => {
     try {
       const uniqueTags = [...new Set(values.tags)];
-      const mealData = {
+      const mealData: Prisma.MealCreateInput | Prisma.MealUpdateInput = {
         name: values.name,
         price: values.price.toString(),
-        photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : '',
+        photoUrl: typeof values.photoUrl === 'string' ? values.photoUrl : undefined,
         isActive: values.isActive ?? true,
         mealTags: {
-          create: uniqueTags.map((tag: string) => ({ name: tag })),
+          connectOrCreate: uniqueTags.map((tag: string) => ({
+            where: { name: tag },
+            create: { name: tag },
+          })) as Prisma.MealTagCreateOrConnectWithoutMealInput[]
         },
       }
 
       if (editingMeal) {
-        // Remove deleted tags
-        const deletedTags = editingMeal.mealTags
-          .filter(tag => !uniqueTags.includes(tag.name))
-          .map(tag => ({ id: tag.id }));
-
-        // Update existing tags and create new ones
-        const existingTags = editingMeal.mealTags.map(tag => tag.name);
-        const tagsToCreate = uniqueTags.filter(tag => !existingTags.includes(tag));
-
-        mealData.mealTags = {
-          deleteMany: deletedTags,
-          create: tagsToCreate.map((tag: string) => ({ name: tag })),
-        };
-
         await updateMeal({
           where: { id: editingMeal.id },
-          data: mealData,
+          data: {
+            ...mealData,
+            mealTags: {
+              ...mealData.mealTags,
+              disconnect: editingMeal.mealTags
+                .filter(tag => !uniqueTags.includes(tag.name))
+                .map(tag => ({ name: tag.name })) as Prisma.MealTagWhereUniqueInput[]
+            },
+          },
         })
         enqueueSnackbar('Meal updated successfully', { variant: 'success' })
       } else {
         await createMeal({
-          data: mealData,
+          data: mealData as Prisma.MealCreateInput,
         })
         enqueueSnackbar('Meal added successfully', { variant: 'success' })
       }

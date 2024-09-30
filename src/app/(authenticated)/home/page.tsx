@@ -21,7 +21,7 @@ export default function HomePage() {
   const { enqueueSnackbar } = useSnackbar()
 
   const [searchTerm, setSearchTerm] = useState('')
-  const [cart, setCart] = useState<{ meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl: string }; quantity: number }[]>([])
+  const [cart, setCart] = useState<{ meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl?: string }; quantity: number }[]>([])
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; parentContact: string; class: string; balance: number; dateCreated: Date; dateUpdated: Date; } | null>(null)
   const [customerBalance, setCustomerBalance] = useState<number>(0)
   const [paymentType, setPaymentType] = useState<string>('Balance')
@@ -31,20 +31,20 @@ export default function HomePage() {
   const pageSize = 20
 
   const { data: meals, fetchNextPage, hasNextPage, isLoading, error } = Api.meal.findMany.useInfiniteQuery(
-      {
-        where: { isActive: true },
-        take: pageSize,
-        include: { mealTags: true, imageUrl: true },
+    {
+      where: { isActive: true },
+      take: pageSize,
+      include: { mealTags: true },
+    },
+    {
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.length < pageSize) {
+          return undefined;
+        }
+        return { skip: allPages.length * pageSize };
       },
-      {
-        getNextPageParam: (lastPage, allPages) => {
-          if (lastPage.length < pageSize) {
-            return undefined;
-          }
-          return { skip: allPages.length * pageSize };
-        },
-      }
-    )
+    }
+  )
   useEffect(() => {
     if (error) {
       const errorMessage = error.message || 'An unexpected error occurred';
@@ -78,7 +78,7 @@ export default function HomePage() {
         }
         acc[tag].push({
           ...meal,
-          imageUrl: meal.imageUrl !== undefined ? meal.imageUrl : '/default-meal-image.jpg'
+          imageUrl: meal.imageUrl || '/default-meal-image.jpg'
         });
       });
       return acc;
@@ -113,7 +113,7 @@ export default function HomePage() {
     };
     fetchMeals();
   }, [fetchNextPage, enqueueSnackbar]);
-  const addToCart = useCallback((meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl: string }) => {
+  const addToCart = useCallback((meal: { id: string; name: string; price: string; mealTags: { name: string }[]; imageUrl?: string }) => {
     setCart(prevCart => {
       const existingItem = prevCart.find(item => item.meal.id === meal.id)
       if (existingItem) {
