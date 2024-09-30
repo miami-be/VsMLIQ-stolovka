@@ -10,6 +10,7 @@ import {
   Modal,
   Button,
 } from 'antd'
+import type { ReactNode } from 'react'
 import {
   SearchOutlined,
   CalendarOutlined,
@@ -109,13 +110,13 @@ export default function OrdersPage() {
           placeholder="Search by customer name"
           onChange={handleCustomerSearch}
           style={{ width: 200 }}
-          prefix={<UserOutlined rev={undefined} />}
+          prefix={<UserOutlined />}
         />
         <DatePicker
           onChange={handleDateSearch}
           placeholder="Search by date"
           style={{ width: 200 }}
-          prefix={<CalendarOutlined rev={undefined} />}
+          prefix={<CalendarOutlined />}
         />
       </Space>
 

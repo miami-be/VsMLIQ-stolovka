@@ -106,7 +106,6 @@ model User {
     @@allow("read", true)
     @@allow('update', auth().id == this.id && !password.includes())
     @@allow('update', auth().globalRole == 'ADMIN' && !password.includes())
-
 model Account {
     id                       String  @id @default(uuid())
     userId                   String
@@ -126,7 +125,6 @@ model Account {
     @@unique([provider, providerAccountId])
 
     @@allow("all", auth().id == user.id)
-}
 
 model Session {
     id           String   @id @default(uuid())
