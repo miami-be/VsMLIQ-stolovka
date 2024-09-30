@@ -74,6 +74,11 @@ enum UserStatus {
     VERIFIED
 }
 
+enum GlobalRole {
+    USER
+    ADMIN
+}
+
 model User {
     id                String             @id @default(uuid())
     name              String?
@@ -85,8 +90,8 @@ model User {
     status            UserStatus         @default(VERIFIED)
 
     // this is the role of the user for the application
-    globalRole        String             @default('USER')
-    password          String?            @password @omit
+    globalRole        GlobalRole         @default(USER)
+    password          String?            @password @omit @default("")
     dateCreated       DateTime           @default(now())
     dateUpdated       DateTime           @updatedAt @default(now())
     accounts          Account[]
@@ -99,7 +104,8 @@ model User {
     //we only allow that user to register if they don't create an admin role
     @@allow("create", globalRole != 'ADMIN')
     @@allow("read", true)
-}
+    @@allow('update', auth().id == this.id && !password.includes())
+    @@allow('update', auth().globalRole == 'ADMIN' && !password.includes())
 
 model Account {
     id                       String  @id @default(uuid())

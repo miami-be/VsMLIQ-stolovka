@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Typography, Table, Button, Modal, Form, Input, Space } from 'antd'
+import { Typography, Table, Button, Modal, Form, Input, Space, Select } from 'antd'
 import {
   UserAddOutlined,
   DeleteOutlined,
@@ -47,7 +47,7 @@ export default function UsersPage() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record) => (
+      render: (_, record) => user?.globalRole !== 'USER' && (
         <Button
           icon={<DeleteOutlined />}
           onClick={() => showDeleteConfirm(record)}
@@ -58,10 +58,6 @@ export default function UsersPage() {
       ),
     },
   ]
-
-  const showModal = () => {
-    setIsModalVisible(true)
-  }
 
   const handleCancel = () => {
     setIsModalVisible(false)
@@ -74,7 +70,8 @@ export default function UsersPage() {
         data: {
           name: values.name,
           email: values.email,
-          globalRole: values.globalRole,
+          password: values.password,
+          globalRole: values.globalRole || 'ADMIN',
         },
       })
       enqueueSnackbar('User created successfully', { variant: 'success' })
@@ -114,9 +111,11 @@ export default function UsersPage() {
           View and manage system users to control access to the application.
         </Text>
 
-        <Button type="primary" icon={<UserAddOutlined />} onClick={showModal}>
-          Add New User
-        </Button>
+        {user?.globalRole !== 'USER' && (
+          <Button type="primary" icon={<UserAddOutlined />} onClick={() => setIsModalVisible(true)}>
+            Add New User
+          </Button>
+        )}
 
         <Table
           columns={columns}
@@ -150,13 +149,27 @@ export default function UsersPage() {
               <Input />
             </Form.Item>
             <Form.Item
+              name="password"
+              label="Password"
+              rules={[
+                { required: true, message: 'Please input the password!' },
+                { min: 6, message: 'Password must be at least 6 characters long!' },
+              ]}
+            >
+              <Input.Password />
+            </Form.Item>
+            <Form.Item
               name="globalRole"
               label="Global Role"
               rules={[
                 { required: true, message: 'Please select the global role!' },
               ]}
+              initialValue="ADMIN"
             >
-              <Input />
+              <Select options={[
+                { value: 'ADMIN', label: 'Admin' },
+                { value: 'USER', label: 'User' },
+              ]} />
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit">
