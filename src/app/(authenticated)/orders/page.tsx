@@ -81,14 +81,7 @@ export default function OrdersPage() {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_: any, record: any) => (
-        <Button
-          icon={<InfoCircleOutlined />}
-          onClick={() => setSelectedOrder(record)}
-        >
-          Details
-        </Button>
-      ),
+      render: (_: any, record: any) => 'Details',
     },
   ]
 
@@ -126,6 +119,11 @@ export default function OrdersPage() {
         loading={isLoading}
         rowKey="id"
         pagination={{ pageSize: 10 }}
+      />
+      <Button
+        icon={<InfoCircleOutlined />}
+        onClick={() => setSelectedOrder(record)}
+        title="Details"
       />
 
       <Modal

@@ -1,72 +1,63 @@
 
 
 model Meal {
-
-    id                String        @id @default(uuid())  
-    name            String?          
-    price          String?          
+    id          String        @id @default(uuid())  
+    name        String?          
+    price       String?          
     photoUrl    String?          
-    isActive        Boolean         @default(true)
-
-mealTags    MealTag[]  @relation("meal")  
-    orderItems  OrderItem[]  @relation("meal")  
-      dateCreated DateTime @default(now())
-      dateUpdated DateTime @updatedAt  @default(now())
-      @@allow("all", true)
+    isActive    Boolean         @default(true)
+    mealTags    MealTag[]       @relation("meal")  
+    orderItems  OrderItem[]     @relation("meal")  
+    dateCreated DateTime        @default(now())
+    dateUpdated DateTime        @updatedAt @default(now())
+    @@allow("all", true)
 }
 
 model MealTag {
-
-    id                String        @id @default(uuid())  
-    name            String?          
-    mealId        String?          
-    meal            Meal?            @relation(fields: [mealId], references: [id], name:"meal")  
-
-dateCreated DateTime @default(now())
-      dateUpdated DateTime @updatedAt  @default(now())
-      @@allow("all", true)
+    id          String    @id @default(uuid())  
+    name        String?          
+    mealId      String?          
+    meal        Meal?     @relation(fields: [mealId], references: [id], name: "meal")  
+    dateCreated DateTime  @default(now())
+    dateUpdated DateTime  @updatedAt @default(now())
+    @@allow("all", true)
 }
 
 model Customer {
-
-    id                String        @id @default(uuid())  
-    name            String?          
-    parentContact  String?          
-    class          String?          
-    balance      Float?          
-
-orders        Order[]      @relation("customer")  
-      dateCreated DateTime @default(now())
-      dateUpdated DateTime @updatedAt  @default(now())
-      @@allow("all", true)
+    id            String    @id @default(uuid())  
+    name          String?          
+    parentContact String?          
+    class         String?          
+    balance       Float?          
+    orders        Order[]   @relation("customer")  
+    dateCreated   DateTime  @default(now())
+    dateUpdated   DateTime  @updatedAt @default(now())
+    @@allow("all", true)
 }
 model Order {
-
-    id                String        @id @default(uuid())  
-    date            String?          
+    id            String      @id @default(uuid())  
+    date          String?          
     amount        String?          
-    paymentMethod  String?          
-    customerId  String?          
-    customer    Customer?    @relation(fields: [customerId], references: [id], name:"customer")  
-
-orderItems  OrderItem[]  @relation("order")  
-      dateCreated DateTime @default(now())
-      dateUpdated DateTime @updatedAt  @default(now())
-      @@allow("all", true)
+    paymentMethod String?          
+    customerId    String?          
+    customer      Customer?   @relation(fields: [customerId], references: [id], name: "customer")  
+    orderItems    OrderItem[] @relation("order")  
+    dateCreated   DateTime    @default(now())
+    dateUpdated   DateTime    @updatedAt @default(now())
+    @@allow("all", true)
 }
 
 model OrderItem {
+    id          String   @id @default(uuid())
+    quantity    Float?
+    orderId     String?
+    order       Order?   @relation(fields: [orderId], references: [id], name: "order")
+    mealId      String?
+    meal        Meal?    @relation(fields: [mealId], references: [id], name: "meal")
 
-    id                String        @id @default(uuid())  
-    quantity    Float?            
-    orderId      String?          
-    order          Order?          @relation(fields: [orderId], references: [id], name:"order")  
-    mealId        String?          
-    meal            Meal?            @relation(fields: [mealId], references: [id], name:"meal")  
-
-dateCreated DateTime @default(now())
-      dateUpdated DateTime @updatedAt  @default(now())
-      @@allow("all", true)
+    dateCreated DateTime @default(now())
+    dateUpdated DateTime @updatedAt @default(now())
+    @@allow("all", true)
 }
 
 enum UserStatus {
@@ -80,24 +71,24 @@ enum GlobalRole {
 }
 
 model User {
-    id                String             @id @default(uuid())
-    name              String?
-    email             String?            @unique
-    pictureUrl        String?            @default('https://i.imgur.com/ZdJSK3Y.jpeg')
-    tokenInvitation   String?
-    emailVerified     Boolean?
+    id              String     @id @default(uuid())
+    name            String?
+    email           String?    @unique
+    pictureUrl      String?    @default('https://i.imgur.com/ZdJSK3Y.jpeg')
+    tokenInvitation String?
+    emailVerified   Boolean?
     
-    status            UserStatus         @default(VERIFIED)
+    status          UserStatus @default(VERIFIED)
 
     // this is the role of the user for the application
-    globalRole        GlobalRole         @default(USER)
-    password          String?            @password @omit @default("")
-    dateCreated       DateTime           @default(now())
-    dateUpdated       DateTime           @updatedAt @default(now())
-    accounts          Account[]
-    sessions          Session[]
+    globalRole      GlobalRole @default(USER)
+    password        String?    @password @omit @default("")
+    dateCreated     DateTime   @default(now())
+    dateUpdated     DateTime   @updatedAt @default(now())
+    accounts        Account[]
+    sessions        Session[]
 
-@@auth()
+    @@auth()
     @@allow("all", auth().id == this.id)
     @@allow('all', auth().globalRole == 'ADMIN')
 
@@ -106,6 +97,7 @@ model User {
     @@allow("read", true)
     @@allow('update', auth().id == this.id && !password.includes())
     @@allow('update', auth().globalRole == 'ADMIN' && !password.includes())
+}
 model Account {
     id                       String  @id @default(uuid())
     userId                   String
@@ -125,6 +117,7 @@ model Account {
     @@unique([provider, providerAccountId])
 
     @@allow("all", auth().id == user.id)
+}
 
 model Session {
     id           String   @id @default(uuid())
