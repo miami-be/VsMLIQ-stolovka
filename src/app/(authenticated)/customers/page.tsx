@@ -16,6 +16,7 @@ import {
   DeleteOutlined,
   PlusOutlined,
   DollarOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 import { Prisma } from '@prisma/client'
 const { Title, Text } = Typography
@@ -37,12 +38,15 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] =
     useState<Prisma.CustomerGetPayload<{}> | null>(null)
   const [form] = Form.useForm()
+  const [searchTerm, setSearchTerm] = useState('')
 
   const {
     data: customers,
     isLoading,
     refetch,
-  } = Api.customer.findMany.useQuery({})
+  } = Api.customer.findMany.useQuery({
+    where: { name: { contains: searchTerm, mode: 'insensitive' } }
+  })
   const { mutateAsync: createCustomer } = Api.customer.create.useMutation()
   const { mutateAsync: updateCustomer } = Api.customer.update.useMutation()
   const { mutateAsync: deleteCustomer } = Api.customer.delete.useMutation()
@@ -153,13 +157,22 @@ export default function CustomersPage() {
         View, add, edit, and manage customer information and balances.
       </Text>
 
-      <Button
-        icon={<PlusOutlined />}
-        onClick={handleAddCustomer}
-        style={{ marginBottom: 16, marginTop: 16 }}
-      >
-        Add Customer
-      </Button>
+      <Space style={{ width: '100%', marginBottom: 16 }}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={handleAddCustomer}
+        >
+          Add Customer
+        </Button>
+        <Input
+          placeholder="Search by name"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ width: 200 }}
+          prefix={<SearchOutlined />}
+        />
+      </Space>
 
       <Table
         dataSource={customers}

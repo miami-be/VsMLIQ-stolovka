@@ -30,8 +30,8 @@ export default function OrdersPage() {
   const { user } = useUserContext()
   const { enqueueSnackbar } = useSnackbar()
 
-  const [searchDate, setSearchDate] = useState<string | null>(null)
   const [searchCustomer, setSearchCustomer] = useState('')
+  const [searchDate, setSearchDate] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
 
   const { data: orders, isLoading } = Api.order.findMany.useQuery({
@@ -105,17 +105,17 @@ export default function OrdersPage() {
       <Text>View and manage all orders</Text>
 
       <Space style={{ marginBottom: 16, marginTop: 16 }}>
-        <DatePicker
-          onChange={handleDateSearch}
-          placeholder="Search by date"
-          style={{ width: 200 }}
-        prefix={<CalendarOutlined rev={undefined} />}
-        />
         <Input
           placeholder="Search by customer name"
           onChange={handleCustomerSearch}
           style={{ width: 200 }}
-        prefix={<UserOutlined rev={undefined} />}
+          prefix={<UserOutlined rev={undefined} />}
+        />
+        <DatePicker
+          onChange={handleDateSearch}
+          placeholder="Search by date"
+          style={{ width: 200 }}
+          prefix={<CalendarOutlined rev={undefined} />}
         />
       </Space>
 

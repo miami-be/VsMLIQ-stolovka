@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Prisma, MealTag } from '@prisma/client'
 import {
   Typography,
@@ -22,6 +22,7 @@ import {
   DeleteOutlined,
   UploadOutlined,
   CloseCircleOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 const { Title, Text } = Typography
 import { useUserContext } from '@/core/context'
@@ -41,12 +42,23 @@ export default function MealsPage() {
     include: { mealTags: true }
   }> | null>(null)
   const [form] = Form.useForm()
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const {
     data: meals,
     isLoading,
     refetch,
-  } = Api.meal.findMany.useQuery({ include: { mealTags: true } })
+  } = Api.meal.findMany.useQuery(
+    {
+      where: { isActive: true, name: { contains: searchTerm, mode: 'insensitive' } },
+      include: { mealTags: true },
+      take: pageSize,
+      skip: (currentPage - 1) * pageSize,
+    }
+  )
   const { mutateAsync: createMeal } = Api.meal.create.useMutation()
   const { mutateAsync: updateMeal } = Api.meal.update.useMutation()
   const { mutateAsync: deleteMeal } = Api.meal.delete.useMutation()
@@ -221,29 +233,53 @@ export default function MealsPage() {
     }
   }
 
+  useEffect(() => {
+    setCurrentPage(1)
+    refetch()
+  }, [searchTerm, refetch])
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    refetch();
+  };
+
   return (
     <PageLayout layout="narrow">
       <Title level={2}>Meal Catalogue Management</Title>
       <Text>View, add, edit, and remove meals from the catalogue.</Text>
 
-      <Button
-        type="primary"
-        icon={<PlusOutlined />}
-        onClick={() => {
-          setEditingMeal(null)
-          form.resetFields()
-          setIsModalVisible(true)
-        }}
-        style={{ marginBottom: 16, marginTop: 16 }}
-      >
-        Add New Meal
-      </Button>
+      <Space style={{ marginBottom: 16, marginTop: 16 }}>
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => {
+            setEditingMeal(null)
+            form.resetFields()
+            setIsModalVisible(true)
+          }}
+        >
+          Add New Meal
+        </Button>
+        <Input
+          placeholder="Search meals by name"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ width: 200 }}
+          prefix={<SearchOutlined />}
+        />
+      </Space>
 
       <Table
-        dataSource={meals}
+        dataSource={meals ?? []}
         columns={columns}
         rowKey="id"
         loading={isLoading}
+        pagination={{
+          current: currentPage,
+          pageSize: pageSize,
+          total: meals?.length ?? 0,
+          onChange: (page) => setCurrentPage(page),
+        }}
       />
 
       <Modal
@@ -285,6 +321,8 @@ export default function MealsPage() {
               filterOption={(input, option) =>
                 (option?.label?.toString().toLowerCase() ?? '').includes(input.toLowerCase())
               }
+              // Safely access 'meals' data to prevent TypeError when 'meals' is undefined
+              // Safely handle 'meals' data to prevent TypeError when 'meals' is undefined
               options={Array.from(new Set(meals?.flatMap(meal => meal.mealTags?.map(tag => tag.name) ?? []) ?? [])).map(tag => ({
                 value: tag,
                 label: tag,
